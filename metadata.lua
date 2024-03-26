@@ -3,17 +3,17 @@ PLUGIN = {}
 
 --- !!! MUST BE SET !!!
 --- Plugin name
-PLUGIN.name = "your plugin name"
+PLUGIN.name = "gradle"
 --- Plugin author
-PLUGIN.author = "your name"
+PLUGIN.author = "ahai"
 --- Plugin version
-PLUGIN.version = "0.0.1"
+PLUGIN.version = "0.1.0"
 --- Plugin homepage
-PLUGIN.homepage = "https://github.com/version-fox/vfox-plugin-template"
+PLUGIN.homepage = "https://github.com/version-fox/vfox-gradle"
 --- Plugin license, please choose a correct license according to your needs.
 PLUGIN.license = "Apache 2.0"
 --- Plugin description
-PLUGIN.description = "your plugin description"
+PLUGIN.description = "gradle"
 
 
 --- !!! OPTIONAL !!!
@@ -35,7 +35,7 @@ NOTE:
     you can set this address to the manifest file address, so that the plugin can be updated automatically.
 
  --]]
-PLUGIN.manifestUrl = "https://github.com/version-fox/vfox-plugin-template/releases/download/manifest/manifest.json"
+PLUGIN.manifestUrl = "https://github.com/version-fox/vfox-gradle/releases/download/manifest/manifest.json"
 -- Some things that need user to be attention!
 PLUGIN.notes = {
     "",
