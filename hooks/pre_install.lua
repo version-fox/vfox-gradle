@@ -1,5 +1,6 @@
 local util = require("util")
 local os = require("os")
+local http = require("http")
 --- Returns some pre-installed information, such as version number, download address, local files, etc.
 --- If checksum is provided, vfox will automatically check it for you.
 --- @param ctx table
@@ -12,10 +13,10 @@ function PLUGIN:PreInstall(ctx)
     result.version = version
 
     local downloadUrl = ""
-    local imageUrl = os.getenv("GRADLE_DOWNLOAD_IMAGE")
+    local mirrorUrl = os.getenv("VFOX_GRADLE_MIRRORS")
 
-    if imageUrl ~=nil then
-        downloadUrl = imageUrl.."/gradle-"..version.."-bin.zip"
+    if mirrorUrl ~=nil then
+        downloadUrl = mirrorUrl.."/gradle-"..version.."-bin.zip"
     else
         downloadUrl = util.DownloadInfoUrl:format(version)
     end
@@ -37,7 +38,7 @@ function PLUGIN:PreInstall(ctx)
             error("Empty body in HTTP response")
         end
     elseif resp.status_code == 404 then
-        print("This version does not have checksums")
+        -- do nothing
     else
         return nil
     end

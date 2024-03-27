@@ -38,5 +38,5 @@ NOTE:
 PLUGIN.manifestUrl = "https://github.com/version-fox/vfox-gradle/releases/download/manifest/manifest.json"
 -- Some things that need user to be attention!
 PLUGIN.notes = {
-    "",
+    "The plugin supports specifying mirrors to download the installer.",
 }
