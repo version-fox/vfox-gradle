@@ -7,13 +7,13 @@ PLUGIN.name = "gradle"
 --- Plugin author
 PLUGIN.author = "ahai"
 --- Plugin version
-PLUGIN.version = "0.1.0"
+PLUGIN.version = "0.1.1"
 --- Plugin homepage
 PLUGIN.homepage = "https://github.com/version-fox/vfox-gradle"
 --- Plugin license, please choose a correct license according to your needs.
 PLUGIN.license = "Apache 2.0"
 --- Plugin description
-PLUGIN.description = "gradle"
+PLUGIN.description = "Gradle runtime environment."
 
 
 --- !!! OPTIONAL !!!
