@@ -157,8 +157,14 @@ took 56 and 58 seconds on `windows-latest` (`latest`, then `main`) and 90 and 86
 included: pulling servercore took 2 min 4 s and 3 min 10 s, and `bootstrap-tools.ps1`
 18 s and 47 s. The jobs took 4 min 26 s and 9 min 9 s. The second includes 1 min 57 s
 for the Docker engine, which `install-docker-arm64.ps1` built from source because the
-cache had no entry yet; with the cache it took 13 seconds in vfox-java's run of
-2026-11-03. The two installs of a combination download 136 MB each.
+cache had no entry yet. The two installs of a combination download 136 MB each.
+
+The rerun of the same code the same day (a documentation commit on top) was slower on
+`windows-latest`: 90 and 86 seconds per combination, 5 min 27 s for the `go test` step
+and 6 min 22 s for the job. On `windows-11-arm` it was about the same, with 94 and 90
+seconds and 6 min 3 s, but the Docker engine came from the cache in 12 seconds, so the
+job took 7 min 38 s. Neither run retried anything. Allow for a difference of that size
+between runs.
 
 ### x64
 
