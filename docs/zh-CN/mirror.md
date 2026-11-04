@@ -16,7 +16,7 @@ vfox install gradle@8.7
 | 未设置 | `https://services.gradle.org/distributions/gradle-8.7-bin.zip` | 同一个地址加 `.sha256` |
 | `https://repo.huaweicloud.com/gradle` | `https://repo.huaweicloud.com/gradle/gradle-8.7-bin.zip` | 同一个地址加 `.sha256`；镜像没有时，从 services.gradle.org 读取 |
 
-值末尾的斜杠会被去掉，所以 `https://repo.huaweicloud.com/gradle/` 请求的是同样的文件。未发布：0.1.1 版把自己的 `/` 直接接在值后面，请求的是 `gradle//gradle-8.7-bin.zip`。nginx 上的镜像会把它当成同一个文件，不这样做的镜像则回应 404。想试用 `main`，见 [install-from-source.md](install-from-source.md)。
+值末尾的斜杠会被去掉，所以 `https://repo.huaweicloud.com/gradle/` 请求的是同样的文件。
 
 值为空等同于没有设置。
 
@@ -52,10 +52,10 @@ $env:VFOX_GRADLE_MIRRORS = "https://repo.huaweicloud.com/gradle"
 <mirror>/gradle-8.7-bin.zip
 ```
 
-- `.sha256` 里是摘要，64 位十六进制数字。Gradle 自己的文件里只有摘要。用 `sha256sum` 写出的文件（`<摘要>  <文件名>`）、摘要后面带换行的文件和用大写字母的文件也都可以：插件会把摘要取出来并转成小写。状态码是 200、里面却没有摘要的回应（比如门户网站的页面），会让安装停下来，并提示 `no SHA-256 digest in <地址>`。vfox 把摘要和它下载到的文件的哈希比较，zip 与摘要对不上的镜像，最终会报 `Checksum error`。摘要同样来自镜像，所以它防的是下载损坏，防不住镜像同时提供一个互相吻合的 zip 和摘要。请使用你信任的镜像。没有 `.sha256` 的镜像则改用 services.gradle.org 的摘要来约束，见下文。未发布：0.1.1 版把文件的文本原样交给 vfox，而 vfox 也是原样比较，所以换行、大写字母或 `sha256sum` 的格式，会让一次完好的下载报 `Checksum error`。
-- 没有 `.sha256` 文件的镜像（回应 404）仍然能装，zip 也仍然会被校验：插件改从 `https://services.gradle.org/distributions/gradle-8.7-bin.zip.sha256` 读取摘要，vfox 把它和镜像上那个 zip 的哈希比较。不是 Gradle 发布的那个 zip，会以 `Checksum error` 结束。先问的是镜像，镜像回应 404 之后才问 services.gradle.org，所以有 `.sha256` 的镜像完全不需要 services.gradle.org。如果 services.gradle.org 也给不出摘要，比如网络挡住了它，或者回应不是带着摘要的 200，插件就不给 vfox 摘要：vfox 会打印 `Verifying checksum ...` 和 `WARNING: Checksum is not provided, skip verify...`，然后信任下载的内容。网络若是丢弃发往 services.gradle.org 的流量，安装会先等一会儿，见 [troubleshooting.md](troubleshooting.md#warning-checksum-is-not-provided-skip-verify)。未发布：0.1.1 版只问镜像，所以每个没有 `.sha256` 的镜像都会以这条警告收场。
-- 校验和请求的其他回应，比如网关或防火墙给出的 403、500、567，会让安装停下来，并指出地址，例如 `checksum request failed: HTTP 567 from https://mirror.example/gradle/gradle-8.7-bin.zip.sha256`。不会改去问 services.gradle.org。未发布：0.1.1 版只打印 `no installable runtime provided`。
-- 下载时的 User-Agent 是 `vfox/<vfox 版本> vfox-gradle/<插件版本>`。未发布：0.1.1 版交给 vfox 处理，而 vfox 的下载自称 `Go-http-client/1.1`。华为云的镜像会拒绝这个名字，回应 403 和一段 HTML，vfox 把这段页面当作 zip 保存下来，安装于是以 `Checksum error` 结束。
+- `.sha256` 里是摘要，64 位十六进制数字。Gradle 自己的文件里只有摘要。用 `sha256sum` 写出的文件（`<摘要>  <文件名>`）、摘要后面带换行的文件和用大写字母的文件也都可以：插件会把摘要取出来并转成小写。状态码是 200、里面却没有摘要的回应（比如门户网站的页面），会让安装停下来，并提示 `no SHA-256 digest in <地址>`。vfox 把摘要和它下载到的文件的哈希比较，zip 与摘要对不上的镜像，最终会报 `Checksum error`。摘要同样来自镜像，所以它防的是下载损坏，防不住镜像同时提供一个互相吻合的 zip 和摘要。请使用你信任的镜像。没有 `.sha256` 的镜像则改用 services.gradle.org 的摘要来约束，见下文。
+- 没有 `.sha256` 文件的镜像（回应 404）仍然能装，zip 也仍然会被校验：插件改从 `https://services.gradle.org/distributions/gradle-8.7-bin.zip.sha256` 读取摘要，vfox 把它和镜像上那个 zip 的哈希比较。不是 Gradle 发布的那个 zip，会以 `Checksum error` 结束。先问的是镜像，镜像回应 404 之后才问 services.gradle.org，所以有 `.sha256` 的镜像完全不需要 services.gradle.org。如果 services.gradle.org 也给不出摘要，比如网络挡住了它，或者回应不是带着摘要的 200，插件就不给 vfox 摘要：vfox 会打印 `Verifying checksum ...` 和 `WARNING: Checksum is not provided, skip verify...`，然后信任下载的内容。网络若是丢弃发往 services.gradle.org 的流量，安装会先等一会儿，见 [troubleshooting.md](troubleshooting.md#warning-checksum-is-not-provided-skip-verify)。
+- 校验和请求的其他回应，比如网关或防火墙给出的 403、500、567，会让安装停下来，并指出地址，例如 `checksum request failed: HTTP 567 from https://mirror.example/gradle/gradle-8.7-bin.zip.sha256`。不会改去问 services.gradle.org。
+- 下载时的 User-Agent 是 `vfox/<vfox 版本> vfox-gradle/<插件版本>`。
 - 会跟随重定向。
 - 版本列表来自 gradle.org，而不是镜像：`vfox search gradle` 和 `gradle@latest` 看到的是 [gradle.org/releases](https://gradle.org/releases/) 上的版本。镜像没有的版本，下载时会以 `source file not found` 失败。
 
@@ -65,7 +65,7 @@ $env:VFOX_GRADLE_MIRRORS = "https://repo.huaweicloud.com/gradle"
 
 | 镜像 | `VFOX_GRADLE_MIRRORS` | 结果 |
 | --- | --- | --- |
-| 华为云 | `https://repo.huaweicloud.com/gradle`，或 `https://mirrors.huaweicloud.com/gradle` | 两个地址都装上了 8.7，校验通过。用 0.1.1 版会得到 `Checksum error`，见上文 |
+| 华为云 | `https://repo.huaweicloud.com/gradle`，或 `https://mirrors.huaweicloud.com/gradle` | 两个地址都装上了 8.7，校验通过。用 0.1.1 版会得到 `Checksum error`，见[变更记录](changes.md) |
 | 南京大学 | `https://mirror.nju.edu.cn/gradle` | 装上了 8.7 和 9.0.0，校验通过 |
 | 校园网联合镜像站（CERNET） | `https://mirrors.cernet.edu.cn/gradle` | 它把每个请求重定向到某一所高校的镜像，这次是南京大学的，vfox 会跟随重定向。装上了 8.7，校验通过 |
 
