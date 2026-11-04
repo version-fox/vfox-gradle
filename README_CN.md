@@ -54,7 +54,7 @@ vfox install gradle@8.7
 
 ## 平台
 
-Gradle 的二进制发行包是同一个 zip，各个系统通用（`bin/gradle` 和 `bin/gradle.bat`），插件本身没有针对任何系统的代码。[E2E 测试](docs/zh-CN/e2e.md)运行在 Linux 上，包括 amd64 和 arm64；Windows 和 macOS 没有在 CI 里测试。
+Gradle 的二进制发行包是同一个 zip，各个系统通用（`bin/gradle` 和 `bin/gradle.bat`），插件本身没有针对任何系统的代码。[E2E 测试](docs/zh-CN/e2e.md)在 Linux 容器和 Windows 容器里安装并运行 Gradle，包括 amd64 和 arm64；macOS 没有在 CI 里测试。
 
 ## 文档
 

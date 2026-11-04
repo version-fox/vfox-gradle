@@ -173,22 +173,12 @@ gradle --quiet --no-daemon hello`))
 	out = common.StripANSI(out)
 
 	require.Equalf(t, version, common.GradleVersion(out), "gradle --version must report %s\n--- output ---\n%s", version, out)
-	home := field(out, "GRADLE_HOME_REAL")
+	home := common.Field(out, "GRADLE_HOME_REAL")
 	require.Equalf(t, "gradle-"+version, path.Base(home), "GRADLE_HOME must be the directory of gradle@%s\n--- output ---\n%s", version, out)
-	require.Equalf(t, home+"/bin/gradle", field(out, "GRADLE_BIN_REAL"), "gradle on the PATH must be bin/gradle of GRADLE_HOME\n--- output ---\n%s", out)
-	require.Containsf(t, field(out, "CURRENT"), version, "vfox current gradle must report %s\n--- output ---\n%s", version, out)
+	require.Equalf(t, home+"/bin/gradle", common.Field(out, "GRADLE_BIN_REAL"), "gradle on the PATH must be bin/gradle of GRADLE_HOME\n--- output ---\n%s", out)
+	require.Containsf(t, common.Field(out, "CURRENT"), version, "vfox current gradle must report %s\n--- output ---\n%s", version, out)
 	require.Containsf(t, out, "hello from Gradle "+version, "a build must run with gradle@%s\n--- output ---\n%s", version, out)
-	t.Logf("PASS gradle@%s is in use: GRADLE_HOME %s (%s), and a build runs", version, field(out, "GRADLE_HOME"), home)
-}
-
-// field returns the value of a "KEY=value" line of out, or "" when there is none.
-func field(out, key string) string {
-	for _, line := range strings.Split(out, "\n") {
-		if value, ok := strings.CutPrefix(strings.TrimRight(line, "\r"), key+"="); ok {
-			return value
-		}
-	}
-	return ""
+	t.Logf("PASS gradle@%s is in use: GRADLE_HOME %s (%s), and a build runs", version, common.Field(out, "GRADLE_HOME"), home)
 }
 
 // verifySwitch proves the release in use follows `vfox use`: selecting the
