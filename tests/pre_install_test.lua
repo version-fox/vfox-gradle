@@ -62,6 +62,17 @@ local function check_request(expected)
     cases = cases + 1
 end
 
+-- Every request the hook made, in the order it made them.
+local function check_requests(expected)
+    local want = {}
+    for i, url in ipairs(expected) do
+        want[i] = "GET " .. url
+    end
+    local got = table.concat(state.requests, ", ")
+    assert(got == table.concat(want, ", "), "expected " .. table.concat(want, ", ") .. ", got " .. got)
+    cases = cases + 1
+end
+
 -- Without a mirror the archive comes from services.gradle.org, and so does its
 -- checksum, which is passed on as sha256 for vfox to verify the download with.
 local official = "https://services.gradle.org/distributions/gradle-8.7-bin.zip"
@@ -150,38 +161,114 @@ result = install("8.7", "/", { [official .. ".sha256"] = { status = 200, body = 
 assert(result.url == official, "slash only: " .. tostring(result.url))
 cases = cases + 1
 
--- 404 for the checksum: a release that does not exist, or a mirror that keeps no
--- .sha256 files. The hook still names the archive and gives no digest, so vfox
--- warns that it cannot verify and the download decides (404 ends the install
--- with "source file not found").
+-- 404 for the checksum with no mirror: a release that does not exist. The hook
+-- still names the archive and gives no digest, so vfox warns that it cannot verify
+-- and the download decides (404 ends the install with "source file not found").
+-- services.gradle.org has just been asked, so it is not asked a second time.
 local missing = "https://services.gradle.org/distributions/gradle-8.99-bin.zip"
 result = install("8.99", nil, { [missing .. ".sha256"] = { status = 404, body = "" } })
 assert(result.url == missing, "404: " .. tostring(result.url))
 assert(result.sha256 == nil, "404: expected no sha256, got " .. tostring(result.sha256))
 cases = cases + 2
+check_request(missing .. ".sha256")
+
+-- 404 at a mirror: it keeps no .sha256 files (Tencent Cloud's has none for the
+-- releases after 8.0.1), or it does not carry the release. With no digest vfox warns
+-- and trusts the download, so the hook asks services.gradle.org for the digest of the
+-- same file, and vfox verifies the mirror's copy against the one Gradle publishes. The
+-- archive stays the mirror's. The mirror is asked first, and services.gradle.org once,
+-- after it.
+local mirrored_sum = mirrored .. ".sha256"
+local official_sum = official .. ".sha256"
+for _, mirror in ipairs({ "https://mirror.example/gradle", "https://mirror.example/gradle/" }) do
+    result = install("8.7", mirror, {
+        [mirrored_sum] = { status = 404, body = "" },
+        [official_sum] = { status = 200, body = sha256 },
+    })
+    assert(result.url == mirrored, mirror .. ": the archive is the mirror's, got " .. tostring(result.url))
+    assert(result.sha256 == sha256, mirror .. ": sha256 " .. tostring(result.sha256))
+    cases = cases + 2
+    check_requests({ mirrored_sum, official_sum })
+end
+
+-- The digest of Gradle goes through the same reading as a mirror's would.
+result = install("8.7", "https://mirror.example/gradle", {
+    [mirrored_sum] = { status = 404, body = "" },
+    [official_sum] = { status = 200, body = sha256:upper() .. "  gradle-8.7-bin.zip\n" },
+})
+assert(result.sha256 == sha256, "sha256sum format from Gradle: " .. tostring(result.sha256))
+cases = cases + 1
+
+-- A mirror that is services.gradle.org has answered already: no second request.
+result = install("8.99", "https://services.gradle.org/distributions/", {
+    [missing .. ".sha256"] = { status = 404, body = "" },
+})
+assert(result.url == missing, "mirror that is Gradle: " .. tostring(result.url))
+assert(result.sha256 == nil, "mirror that is Gradle: expected no sha256, got " .. tostring(result.sha256))
+cases = cases + 2
+check_request(missing .. ".sha256")
+
+-- services.gradle.org gives no digest either: not a 404, a refusal, a page in place
+-- of the file, a network that blocks it. It was not the server asked for, so none of
+-- this stops the install. The hook goes on without a digest as it does for any mirror
+-- that has none: vfox warns, and the download decides.
+for label, answer in pairs({
+    ["404"] = { status = 404, body = "" },
+    ["403"] = { status = 403, body = "<html>denied</html>" },
+    ["500"] = { status = 500, body = "" },
+    ["567"] = { status = 567, body = "<html>denied</html>" },
+    ["a page"] = { status = 200, body = "<html><body>Please sign in</body></html>" },
+    ["empty"] = { status = 200, body = "" },
+    ["short"] = { status = 200, body = sha256:sub(1, 63) },
+    ["network"] = { transport_error = "dial tcp 104.18.0.1:443: i/o timeout" },
+}) do
+    result = install("8.7", "https://mirror.example/gradle", {
+        [mirrored_sum] = { status = 404, body = "" },
+        [official_sum] = answer,
+    })
+    assert(result.url == mirrored, label .. ": the archive is the mirror's, got " .. tostring(result.url))
+    assert(result.sha256 == nil, label .. ": expected no sha256, got " .. tostring(result.sha256))
+    cases = cases + 2
+    check_requests({ mirrored_sum, official_sum })
+end
 
 -- Any other status stops the install with a message that names the status and
 -- the address. The hook used to return nothing, and vfox printed only "no
--- installable runtime provided".
+-- installable runtime provided". The mirror was asked for and it is at fault, so
+-- services.gradle.org is not asked for a digest in its place.
 for _, status in ipairs({ 403, 500, 502, 567 }) do
     local ok, err = pcall(install, "8.7", "https://mirror.example/gradle", {
-        [mirrored .. ".sha256"] = { status = status, body = "<html>denied</html>" },
+        [mirrored_sum] = { status = status, body = "<html>denied</html>" },
     })
-    local want = "checksum request failed: HTTP " .. status .. " from " .. mirrored .. ".sha256"
+    local want = "checksum request failed: HTTP " .. status .. " from " .. mirrored_sum
     assert(not ok and tostring(err):find(want, 1, true), "status " .. status .. ": unexpected " .. tostring(err))
+    check_requests({ mirrored_sum })
     cases = cases + 1
 end
+
+-- A 200 from the mirror that holds no digest is the page of a portal, or a file cut
+-- short, and stops it as well: another server's digest would hide that.
+local ok, err = pcall(install, "8.7", "https://mirror.example/gradle", {
+    [mirrored_sum] = { status = 200, body = "<html><body>Please sign in</body></html>" },
+})
+assert(
+    not ok and tostring(err):find("no SHA-256 digest in " .. mirrored_sum, 1, true),
+    "portal: unexpected " .. tostring(err)
+)
+check_requests({ mirrored_sum })
+cases = cases + 1
 
 -- A request that fails stops it too, with the address and what the network said.
 -- vfox's http module words the rest ("Get "<url>": ..."), so only the parts the
 -- hook and the network contribute are checked.
-local ok, err = pcall(install, "8.7", "https://mirror.example/gradle", {
-    [mirrored .. ".sha256"] = { transport_error = "dial tcp: lookup mirror.example: no such host" },
+ok, err = pcall(install, "8.7", "https://mirror.example/gradle", {
+    [mirrored_sum] = { transport_error = "dial tcp: lookup mirror.example: no such host" },
 })
 assert(not ok, "transport error: expected an error")
-for _, part in ipairs({ "HTTP request error: ", mirrored .. ".sha256", "lookup mirror.example: no such host" }) do
+for _, part in ipairs({ "HTTP request error: ", mirrored_sum, "lookup mirror.example: no such host" }) do
     assert(tostring(err):find(part, 1, true), "transport error: expected " .. part .. " in " .. tostring(err))
 end
+check_requests({ mirrored_sum })
 cases = cases + 1
 
 print("PASS: " .. cases .. " PreInstall cases")
