@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package e2e is the single Go module root of the container E2E suite.
+// Package e2e is the single Go module root of the container E2E suites.
 //
 // This directory holds no test logic, only the module definition
 // (go.mod/go.sum); the code is split by subpackage:
@@ -23,7 +23,10 @@
 //   - linux: the Linux container suite (bash-driven), run in CI and locally
 //     through the repository dev container (.devcontainer/, see docs/e2e.md);
 //     linux/mirror is the stand-in for a Gradle mirror it starts in the
-//     containers.
+//     containers;
+//   - windows: the Windows container suite (pwsh-driven), run via
+//     tests/e2e/windows/compose.amd64.yaml (amd64) or
+//     tests/e2e/windows/compose.arm64.yaml (arm64) as `go test ./windows/`.
 //
 // Pure unit tests without containers run from the module root:
 //

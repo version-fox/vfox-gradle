@@ -30,10 +30,14 @@ concurrency:
   group: e2e-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-# The suite runs natively, the way the dev container runs it locally: Go at the
-# dev container's version (.devcontainer/Dockerfile) plus the runner's stock
-# Docker, with the same TESTCONTAINERS_RYUK_DISABLED knob. Linux containers only:
-# see docs/e2e.md for what the suite covers and what it leaves out.
+# The Linux job runs the suite natively, the way the dev container runs it
+# locally: Go at the dev container's version (.devcontainer/Dockerfile) plus
+# the runner's stock Docker, with the same TESTCONTAINERS_RYUK_DISABLED knob.
+# The Windows jobs run it natively too, with the same Go, rather than through
+# the compose runner image (tests/e2e/windows/Dockerfile-runner) that lets a
+# local Windows host need only Docker: on windows-11-arm, vfox-java measured two
+# and a half minutes for extracting Go into that image alone. See docs/e2e.md
+# for what the suites cover and what they leave out.
 
 jobs:
   e2e-linux:
@@ -60,4 +64,42 @@ jobs:
           go-version: 1.27.1
           cache: false
       - run: go test -v -timeout 55m -run TestE2E ./linux
+        working-directory: tests/e2e
+
+  e2e-windows:
+    if: github.repository == 'version-fox/vfox-gradle'
+    name: Windows container (${{ matrix.runs-on }})
+    strategy:
+      fail-fast: false
+      matrix:
+        # TODO See https://github.com/actions/runner-images/issues/13729
+        runs-on: [windows-latest, windows-11-arm]
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 60
+    env:
+      # Three containers at a time, as on Linux, once Docker is off C:.
+      E2E_MAX_JOBS: "3"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      # C: is a network-attached disk on these runners, where extracting the
+      # servercore image took five minutes (vfox-java); Docker, Go's caches and
+      # the temp directory go to a local disk instead.
+      - run: pwsh -NoProfile -File tests/e2e/windows/use-local-disk.ps1
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.1
+          cache: false
+      # The windows-11-arm runner ships no Docker for Windows containers, so
+      # the engine is built here with that Go; the build, minutes long, is
+      # cached on the script that pins it.
+      - if: matrix.runs-on == 'windows-11-arm'
+        uses: actions/cache@v6
+        with:
+          path: C:\vfox-docker\moby\bundles
+          key: moby-windows-arm64-${{ hashFiles('tests/e2e/windows/install-docker-arm64.ps1') }}
+      - if: matrix.runs-on == 'windows-11-arm'
+        run: pwsh -NoProfile -File tests/e2e/windows/install-docker-arm64.ps1
+      - run: go test -v -timeout 55m -run TestE2E ./windows
         working-directory: tests/e2e

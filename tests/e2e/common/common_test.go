@@ -57,17 +57,39 @@ func TestSlugAndPrefix(t *testing.T) {
 }
 
 func TestNormalizeArch(t *testing.T) {
-	for in, want := range map[string]string{"x86_64": "amd64", "AMD64": "amd64", "x64": "amd64", "aarch64": "arm64", "arm64": "arm64"} {
+	for in, want := range map[string]string{
+		"x86_64": "amd64", "AMD64": "amd64", "x64": "amd64", "amd64": "amd64",
+		"aarch64": "arm64", "ARM64": "arm64", "arm64": "arm64",
+	} {
 		got, err := NormalizeArch(in)
 		if err != nil || got != want {
 			t.Errorf("NormalizeArch(%q) = %q, %v; want %q", in, got, err, want)
 		}
 	}
-	if _, err := NormalizeArch("riscv64"); err == nil {
-		t.Error("NormalizeArch(riscv64) must fail")
+	for _, bad := range []string{"riscv64", "x86"} {
+		if _, err := NormalizeArch(bad); err == nil {
+			t.Errorf("NormalizeArch(%s) must fail", bad)
+		}
 	}
+}
+
+// A Windows host names its architecture in $PROCESSOR_ARCHITECTURE, which wins
+// over the architecture the test binary was built for: the Go on a runner can
+// be an emulated one.
+func TestDetectArch(t *testing.T) {
+	t.Setenv("PROCESSOR_ARCHITECTURE", "")
 	if arch, err := DetectArch(); err != nil || (arch != "amd64" && arch != "arm64") {
 		t.Errorf("DetectArch = %q, %v", arch, err)
+	}
+	for in, want := range map[string]string{"AMD64": "amd64", "ARM64": "arm64", " ARM64 ": "arm64"} {
+		t.Setenv("PROCESSOR_ARCHITECTURE", in)
+		if got, err := DetectArch(); err != nil || got != want {
+			t.Errorf("DetectArch with PROCESSOR_ARCHITECTURE=%q = %q, %v; want %q", in, got, err, want)
+		}
+	}
+	t.Setenv("PROCESSOR_ARCHITECTURE", "x86")
+	if _, err := DetectArch(); err == nil {
+		t.Error("DetectArch must fail on 32-bit x86")
 	}
 }
 
@@ -102,6 +124,24 @@ func TestResolveVersion(t *testing.T) {
 	}
 }
 
+// The Windows suite has pins of its own, and $GRADLE_VERSION moves its first
+// release only.
+func TestResolveWindowsVersion(t *testing.T) {
+	t.Setenv("GRADLE_VERSION", "")
+	if got := ResolveWindowsVersion(t); got != WindowsVersion {
+		t.Errorf("ResolveWindowsVersion = %q, want %q", got, WindowsVersion)
+	}
+	t.Setenv("GRADLE_VERSION", " 9.3.0 ")
+	if got := ResolveWindowsVersion(t); got != "9.3.0" {
+		t.Errorf("ResolveWindowsVersion = %q, want 9.3.0", got)
+	}
+	// The Linux suite's releases are free on Windows, where nothing installs them.
+	t.Setenv("GRADLE_VERSION", MirrorVersion)
+	if got := ResolveWindowsVersion(t); got != MirrorVersion {
+		t.Errorf("ResolveWindowsVersion = %q, want %q", got, MirrorVersion)
+	}
+}
+
 // The pinned releases are three releases, the first two written each way Gradle
 // names them, and none of the names no release has is one of them.
 func TestPins(t *testing.T) {
@@ -115,6 +155,29 @@ func TestPins(t *testing.T) {
 		if missing == DefaultVersion || missing == MirrorVersion || missing == NoSumVersion {
 			t.Errorf("%s is pinned and listed as missing", missing)
 		}
+	}
+}
+
+// The Windows suite installs two releases of its own, both from 9.2.0 on, the
+// first line with a native-platform library for Windows on ARM64 (see
+// WindowsVersion).
+func TestWindowsPins(t *testing.T) {
+	if WindowsVersion == WindowsSecondVersion {
+		t.Fatalf("the Windows pins %s and %s must differ: the second install would find the first", WindowsVersion, WindowsSecondVersion)
+	}
+	for _, pin := range []string{WindowsVersion, WindowsSecondVersion} {
+		if Compare(pin, "9.2.0") < 0 {
+			t.Errorf("%s has no native library for Windows on ARM64: that starts with 9.2.0", pin)
+		}
+		if !strings.HasPrefix(pin, "9.") || strings.Count(pin, ".") != 2 {
+			t.Errorf("%s should be a 9.x release written with its third number", pin)
+		}
+		if slices.Contains(MissingVersions, pin) {
+			t.Errorf("%s is pinned and listed as missing", pin)
+		}
+	}
+	if Compare(WindowsSecondVersion, WindowsVersion) <= 0 {
+		t.Errorf("%s should be newer than %s: the suite switches from the newer to the older", WindowsSecondVersion, WindowsVersion)
 	}
 }
 
@@ -232,6 +295,25 @@ func TestGradleVersion(t *testing.T) {
 	}
 	if got := GradleVersion("Welcome to Gradle 8.7!\n"); got != "" {
 		t.Errorf("GradleVersion of a sentence = %q, want empty", got)
+	}
+}
+
+func TestField(t *testing.T) {
+	// The output of a Windows script has CRLF line endings and holds a path with a space.
+	out := "Gradle 9.2.0\r\nGRADLE_HOME=C:\\Users\\John Doe\\.vfox\\sdks\\gradle\r\nEMPTY=\r\nCURRENT=gradle@9.2.0\r\nGRADLE_HOME=again\r\n"
+	for key, want := range map[string]string{
+		"GRADLE_HOME": `C:\Users\John Doe\.vfox\sdks\gradle`, // the first one
+		"CURRENT":     "gradle@9.2.0",
+		"EMPTY":       "",
+		"MISSING":     "",
+		"GRADLE":      "", // a key is not a prefix of another
+	} {
+		if got := Field(out, key); got != want {
+			t.Errorf("Field(%q) = %q, want %q", key, got, want)
+		}
+	}
+	if got := Field("GRADLE_HOME=/home/user/.vfox/sdks/gradle\n", "GRADLE_HOME"); got != "/home/user/.vfox/sdks/gradle" {
+		t.Errorf("Field of a Unix line = %q", got)
 	}
 }
 

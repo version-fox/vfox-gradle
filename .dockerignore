@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# The E2E image (tests/e2e/linux/Dockerfile) is built from the repository root
-# and copies only metadata.lua, hooks and lib. tests/ stays in the context
-# because the Dockerfile itself lives there.
+# NOTE: tests/ is deliberately kept in the context: every E2E image is built from
+# the repository root and every Dockerfile lives under tests/e2e. Besides
+# metadata.lua, hooks and lib, the Windows image copies
+# tests/e2e/windows/bootstrap-tools.ps1, and the Linux one the mirror stand-in
+# in tests/e2e/linux/mirror.
 .git
 .gitignore
 .gitattributes

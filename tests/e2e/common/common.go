@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package common holds the target-independent logic of the container E2E suite:
-// the matrix, the pinned Gradle releases, the knobs read from the environment,
-// and the parsing of what vfox, Gradle and the mirror stand-in print.
+// Package common holds the target-independent logic of the container E2E
+// suites: the matrix, the pinned Gradle releases, the knobs read from the
+// environment, and the parsing of what vfox, Gradle and the mirror stand-in
+// print.
 //
-// The code that drives a container stays in the linux package; what can be
-// checked without one lives here, where `go test -short ./...` covers it.
+// The code that drives a container stays in the linux and windows packages
+// (bash and pwsh); what can be checked without one lives here, where
+// `go test -short ./...` covers it.
 package common
 
 import (
@@ -56,6 +58,25 @@ const MirrorVersion = "8.7"
 // 1.12 at 42 MB where the other two are 134 MB, and it is installed and never
 // run.
 const NoSumVersion = "1.12"
+
+// WindowsVersion is the release the Windows suite installs from
+// services.gradle.org and uses, where the Linux suite has DefaultVersion. The
+// Windows suite runs on arm64 too, and Gradle loads a native library of
+// native-platform for the console, the file system and the Windows registry
+// that has a build for Windows on ARM64 from 9.2.0 on: the lib directories of
+// 8.7, 9.0.0 and 9.1.0 hold none, and 9.2.0's holds
+// native-platform-windows-aarch64 (checked on 2026-11-04). Gradle declined to
+// backport it to 8.x (gradle/gradle#35396). So the Windows suite takes the first
+// release that runs natively on both architectures, written with the trailing
+// .0 as Gradle names the first release of a line.
+const WindowsVersion = "9.2.0"
+
+// WindowsSecondVersion is the release the Windows suite installs next, and
+// switches to and from WindowsVersion. It is the next release of the same line,
+// so it has the same native libraries, and unlike the Linux suite's second
+// release it comes from services.gradle.org too: the mirror stand-in runs on
+// Linux only.
+const WindowsSecondVersion = "9.2.1"
 
 // MissingVersions are names no release has, which `vfox install` must reject:
 // a release that does not exist (99.0), and two that exist without the .0 the
@@ -113,7 +134,8 @@ func Sanitize(s string) string {
 	return b.String()
 }
 
-// NormalizeArch maps uname-style names and common aliases to docker arch names.
+// NormalizeArch maps uname-style names, Windows PROCESSOR_ARCHITECTURE values
+// and common aliases to docker arch names.
 func NormalizeArch(s string) (string, error) {
 	switch strings.ToLower(s) {
 	case "x86_64", "x64", "amd64":
@@ -125,10 +147,14 @@ func NormalizeArch(s string) (string, error) {
 	}
 }
 
-// DetectArch reports the runner architecture, the test binary's own. There is
-// deliberately no override knob: emulated runs are not supported, and CI covers
-// each architecture on a native runner.
+// DetectArch reports the runner architecture: $PROCESSOR_ARCHITECTURE on
+// Windows hosts (AMD64/ARM64/x86), else the test binary's own arch. There is
+// deliberately no override knob: emulated runs (arm64 on an x64 host) are not
+// supported, and CI covers each arch on native runners.
 func DetectArch() (string, error) {
+	if arch, ok := os.LookupEnv("PROCESSOR_ARCHITECTURE"); ok && strings.TrimSpace(arch) != "" {
+		return NormalizeArch(strings.TrimSpace(arch))
+	}
 	return NormalizeArch(runtime.GOARCH)
 }
 
@@ -147,7 +173,7 @@ func Matrix() []Combo {
 }
 
 // MaxJobs bounds parallel containers; honours $E2E_MAX_JOBS and falls back to
-// def when unset or invalid.
+// def when unset or invalid. Linux passes 3, Windows passes 2.
 func MaxJobs(def int) int {
 	if v, ok := os.LookupEnv("E2E_MAX_JOBS"); ok {
 		if n, err := strconv.Atoi(strings.TrimSpace(v)); err == nil && n >= 1 {
@@ -171,12 +197,26 @@ func RetryAttempts() int {
 // from MirrorVersion and NoSumVersion: the later install would find the first.
 func ResolveVersion(t *testing.T) string {
 	t.Helper()
+	return resolveVersion(t, DefaultVersion, MirrorVersion, NoSumVersion)
+}
+
+// ResolveWindowsVersion honours $GRADLE_VERSION, else WindowsVersion. It must
+// differ from WindowsSecondVersion: the later install would find the first.
+func ResolveWindowsVersion(t *testing.T) string {
+	t.Helper()
+	return resolveVersion(t, WindowsVersion, WindowsSecondVersion)
+}
+
+// resolveVersion reads $GRADLE_VERSION and fails on one of the releases the
+// suite installs after it.
+func resolveVersion(t *testing.T, def string, later ...string) string {
+	t.Helper()
 	version := strings.TrimSpace(os.Getenv("GRADLE_VERSION"))
 	if version == "" {
-		return DefaultVersion
+		return def
 	}
-	if version == MirrorVersion || version == NoSumVersion {
-		t.Fatalf("GRADLE_VERSION=%s is a release the suite installs through a mirror; pick another", version)
+	if slices.Contains(later, version) {
+		t.Fatalf("GRADLE_VERSION=%s is a release the suite installs next; pick another", version)
 	}
 	return version
 }
@@ -351,6 +391,19 @@ var gradleVersion = regexp.MustCompile(`(?m)^Gradle (\S+)\s*$`)
 func GradleVersion(output string) string {
 	if m := gradleVersion.FindStringSubmatch(StripANSI(output)); m != nil {
 		return m[1]
+	}
+	return ""
+}
+
+// Field returns the value of the first "KEY=value" line of out, or "" when
+// there is none. A script prints the facts the suite checks this way, next to
+// the output of the tools it runs; the carriage return of a Windows line
+// ending is not part of the value.
+func Field(out, key string) string {
+	for _, line := range strings.Split(out, "\n") {
+		if value, ok := strings.CutPrefix(strings.TrimRight(line, "\r"), key+"="); ok {
+			return value
+		}
 	}
 	return ""
 }
