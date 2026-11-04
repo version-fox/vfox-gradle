@@ -38,7 +38,7 @@ vfox 加载 `metadata.lua`，命令需要时调用相应的钩子，并向钩子
 
 - `PreInstall` 返回 `version`、`url`、`sha256` 和 `headers`。`version` 是安装后的名字，钩子按输入原样返回它。摘要那个键的名字就是算法，vfox 用这个算法对下载的文件求哈希，再把十六进制摘要和拿到的文本原样比较：小写，前后什么也没有，否则无论下载的内容如何，安装都会因 `Checksum error` 失败。所以钩子要从读到的文件里把摘要取出来（镜像可能是按 `sha256sum` 的格式写的），并转成小写。
 - 下载是 vfox 自己发起的，除非 `headers` 另有说明，否则自称 `Go-http-client/1.1`。拒绝 Go 默认名字、回应 403 和一段 HTML 的镜像（华为云的就是，2026-11-03），那段页面会被当作 zip 保存下来，安装以 `Checksum error` 结束。钩子在 `headers` 里设置了 `User-Agent`，用的是 vfox 为钩子发出的请求使用的字符串（`util:download_headers()`）。
-- 没有摘要时 vfox 只是警告（`Checksum is not provided`），然后继续下载。钩子在校验和请求回应 404 时（没有 `.sha256` 文件的镜像就是这样）不给摘要，对 200 和 404 以外的状态码则报错。它以前对这些状态码什么也不返回，vfox 就只打印 `no installable runtime provided`。
+- 没有摘要时 vfox 只是警告（`Checksum is not provided`），然后继续下载，而且它只会拿钩子给它的摘要去校验下载。所以镜像对 `.sha256` 回应 404（没有这类文件的镜像就是这样）时，钩子会向 services.gradle.org 要同一个版本的摘要，vfox 再用它校验镜像上的 zip。腾讯云的镜像没有 8.7 和 9.8.2 的 `.sha256`，在这之前，装它们都以那条警告收场。只有这一步也落空时，钩子才不给摘要：被问的服务器是镜像，而需要镜像的网络可能挡住了 services.gradle.org，这不是停下安装的理由。对镜像本身，钩子在 200 和 404 以外的状态码、以及没有摘要的 200 时报错，并且不会改去问 services.gradle.org。它以前对这些状态码什么也不返回，vfox 就只打印 `no installable runtime provided`。
 - `latest` 不由插件处理：vfox 核心取 `Available` 的第一项（`Using latest version: 9.8.2`），所以 `lib/util.lua` 给列表排的顺序，就是 `latest` 的含义。vfox 把 `Available` 的结果缓存 12 小时（`vfox config cache.availableHookDuration`）。
 - `PreUse` 什么也不返回，由 vfox 自己把输入的内容和已安装的版本匹配，按版本号的开头匹配：`gradle@8` 选中已安装的最新 8.x，`gradle@8.1` 选不中 8.14。
 - `EnvKeys` 拿到的 `ctx.path` 是链接 `~/.vfox/sdks/gradle`，vfox 一直让它指向正在使用的版本，所以无论选中哪个版本，`GRADLE_HOME` 的值都一样。它设置 `GRADLE_HOME` 和 `PATH`，没有 `JAVA_HOME` 之类的东西。
@@ -47,7 +47,7 @@ vfox 加载 `metadata.lua`，命令需要时调用相应的钩子，并向钩子
 
 ## 镜像
 
-`VFOX_GRADLE_MIRRORS` 在 `PreInstall` 里用 `os.getenv` 读取，值末尾的斜杠会被去掉。没有设置时，地址是 `util.DownloadInfoUrl`。校验和从同一个地址加 `.sha256` 读取，所以镜像要么两个都提供，要么都不提供。`Available` 从不使用镜像。[mirror.md](mirror.md) 是从用户角度写的说明。
+`VFOX_GRADLE_MIRRORS` 在 `PreInstall` 里用 `os.getenv` 读取，值末尾的斜杠会被去掉。没有设置时，地址是 `util.DownloadInfoUrl`。校验和从同一个地址加 `.sha256` 读取，镜像回应 404 时，钩子会再向 `util.DownloadInfoUrl` 要一次，所以镜像可以只提供 zip。`Available` 从不使用镜像。[mirror.md](mirror.md) 是从用户角度写的说明。
 
 ## 测试
 
@@ -63,7 +63,7 @@ vfox plugin test . --file tests/pre_install_test.lua
 测试文件只调用一次 `vfox.test` 的 `test.load()`，并通过它返回的对象调用真正的钩子，比如 `plugin:PreInstall({ version = "8.7" })`。`test.load` 接受平台（`os`、`arch`）、环境变量（`env`）和一个回答所有 HTTP 请求的函数（`http`）。之后就可以 require `lib` 里的模块。见 vfox 的[测试和调试插件](https://vfox.dev/zh-hans/plugins/create/testing.html)。钩子的上下文和返回值都会经过 vfox 的解码，所以在 vfox 要求返回 table 的地方返回了字符串的钩子，会让测试失败。
 
 - `available_test.lua` 读取 `tests/fixtures/releases.html`，检查得到的列表：每个版本都在，尽管页面按日期排列，结果仍从新到旧；只向 gradle.org 发一次请求；状态码不是 200 或者请求失败时，报同一条错误。
-- `pre_install_test.lua` 用一张按地址索引的表来回答校验和请求，并断言钩子请求了哪个地址。它覆盖有镜像和没有镜像时的地址、User-Agent、摘要文件的各种写法，以及请求的每一种结果：200、404、其他状态码和网络失败。
+- `pre_install_test.lua` 用一张按地址索引的表来回答校验和请求，并按顺序断言钩子请求了哪些地址。它覆盖有镜像和没有镜像时的地址、User-Agent、摘要文件的各种写法，以及请求的每一种结果：200、404、其他状态码和网络失败。对镜像的 404，它还覆盖 services.gradle.org 随后可能给出的各种回应，以及镜像的其他失败不会走到这一步。
 - `env_keys_test.lua` 和 `util_test.lua` 覆盖 `EnvKeys` 和版本比较。
 
 测试看不到所在机器的环境：`os.getenv` 对 `VFOX_GRADLE_MIRRORS` 的回答来自 `pre_install_test.lua` 里的一张表，它为每个用例设置镜像，所以你自己 Shell 里的镜像不会影响测试。gopher-lua 1.1.1 会丢失被闭包在 `pcall` 之后赋值的 `local x = nil`：外层作用域读到的仍是 `nil`。这就是 HTTP 函数读取的状态保存在表字段里的原因。
@@ -88,7 +88,7 @@ vfox plugin run . EnvKeys --input '{"path":"C:\\vfox\\gradle-8.7"}' --os windows
 
 - `Available` 读取的是 gradle.org/releases 的 HTML，也就是每个版本开头的 `<a name="…"></a>` 锚点。如果标记变了，钩子会返回空列表，vfox 会把它缓存 12 小时，`latest` 也找不到任何东西。`https://services.gradle.org/versions/all` 是一份 JSON 列表，2026-11-03 有 534 项（正式版本、候选版本、快照和每夜构建，带有 `version`、`snapshot`、`nightly`、`rcFor`、`downloadUrl` 和 `checksumUrl`），不依赖页面标记，也能列出候选版本。
 - 只安装 binary-only 发行包（`-bin`），不安装 complete 版本（`-all`）。快照和每夜构建由 Gradle 放在 `distributions-snapshots` 下，装不上。
-- 摘要和 zip 来自同一台服务器，所以它防的是下载损坏，防不住镜像同时提供一对互相吻合的文件。
+- 有 `.sha256` 的镜像，摘要和 zip 来自同一台服务器，所以它防的是下载损坏，防不住镜像同时提供一对互相吻合的文件。没有 `.sha256` 的镜像则由 services.gradle.org 的摘要来约束，更严格。镜像有 `.sha256` 时不会去问 services.gradle.org：先问它，就会让每个镜像都受它约束，也会让那些因为它太慢或被挡住才用镜像的网络依赖它。
 - 下载的回应只要不是 404，vfox 就把回应的内容当作压缩包保存下来，比如 403 的页面，然后报告 `Checksum error`（[vfox#746](https://github.com/version-fox/vfox/issues/746)）。这是 vfox 的问题，不是插件的；上面的 `User-Agent` 让插件避开了遇到过的那一种情形。
 - 容器测试只覆盖 Linux，包括 amd64 和 arm64。Windows 容器和 macOS 没有对应的任务，见 [e2e.md](e2e.md#套件没有覆盖什么)。
 

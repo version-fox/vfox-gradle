@@ -60,9 +60,10 @@ filesystem works too.
 | `E2E_MAX_JOBS`       | `3`           | Parallel containers per host                                                   |
 | `E2E_RETRY_ATTEMPTS` | `3`           | Attempts per network-touching exec (linear 10s backoff)                        |
 
-The suite installs a second release, `8.7`, through its mirror stand-in, so
-`GRADLE_VERSION` must be another. Both have to run on the Java 21 of the image
-(Gradle 8.5 and later, and 9.x). Your own `VFOX_GRADLE_MIRRORS` stays on the host: the
+The suite installs a second release, `8.7`, through its mirror stand-in, and a third,
+`1.12`, through another, so `GRADLE_VERSION` must be neither. `GRADLE_VERSION` and
+`8.7` have to run on the Java 21 of the image (Gradle 8.5 and later, and 9.x); `1.12`
+is installed and never run. Your own `VFOX_GRADLE_MIRRORS` stays on the host: the
 containers get the environment the suite gives them.
 
 ## Linux (Ubuntu 26.04)
@@ -87,7 +88,8 @@ Docker users point the Docker client at their socket
 socket mount covers that case for you.
 
 On 2026-11-03 one combination took 113 seconds, and the whole run, the image build
-included, 175 seconds. The two installs download 134 MB each.
+included, 175 seconds. The two installs then downloaded 134 MB each; the third, 1.12,
+adds 42 MB.
 
 ## Local checks
 
@@ -185,11 +187,20 @@ what vfox installs.
 10. `vfox use` switches between the two releases: each time `gradle --version`,
     `GRADLE_HOME` and `gradle` follow (item 8). `vfox list gradle` shows both, and
     `vfox uninstall gradle@8.7` leaves the other working.
+11. The third release, 1.12, installs through a second stand-in that serves the zips and
+    answers 404 to every `.sha256`: a mirror that keeps no sums, as Tencent Cloud's
+    has none for the releases after 8.0.1. Its log must show the `GET` for the
+    `.sha256` answered 404 and the one for the zip answered 200. vfox must still print
+    `Verifying checksum <digest>...` and not `WARNING: Checksum is not provided, skip
+    verify...`, and the digest must be the one Gradle publishes, as in item 7: the
+    plugin took it from services.gradle.org, and vfox compared it with the hash of the
+    zip it downloaded from the mirror. Release 0.1.1 gave vfox no digest, and the
+    install ended in the warning. The release is 42 MB and is never run.
 
 The matrix is the two vfox channels, `latest` and `main`, on each architecture the
 runner has. The pinned releases are `9.0.0`, written with the third number as Gradle
-writes it since 9.0.0, and `8.7`, written without as it did up to 8.x. Old releases
-stay downloadable, so the pins do not age.
+writes it since 9.0.0, `8.7`, written without as it did up to 8.x, and `1.12`, which
+is small. Old releases stay downloadable, so the pins do not age.
 
 ## What the suite leaves out
 

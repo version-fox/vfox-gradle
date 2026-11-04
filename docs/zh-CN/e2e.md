@@ -35,7 +35,7 @@ devcontainer exec --workspace-folder . bash
 | `E2E_MAX_JOBS` | `3` | 每台宿主并行的容器数 |
 | `E2E_RETRY_ATTEMPTS` | `3` | 每个涉及网络的 exec 的尝试次数（线性退避 10 秒） |
 
-套件还会经由它的镜像替身安装第二个版本 `8.7`，所以 `GRADLE_VERSION` 必须是另一个版本。两个版本都要能在镜像自带的 Java 21 上运行（Gradle 8.5 及以后，以及 9.x）。你自己 Shell 里的 `VFOX_GRADLE_MIRRORS` 留在宿主上：容器拿到的只是套件给它的环境。
+套件还会经由它的镜像替身安装第二个版本 `8.7`，再经由另一个替身安装第三个版本 `1.12`，所以 `GRADLE_VERSION` 不能是这两个版本。`GRADLE_VERSION` 和 `8.7` 要能在镜像自带的 Java 21 上运行（Gradle 8.5 及以后，以及 9.x）；`1.12` 只安装，不运行。你自己 Shell 里的 `VFOX_GRADLE_MIRRORS` 留在宿主上：容器拿到的只是套件给它的环境。
 
 ## Linux（Ubuntu 26.04）
 
@@ -54,7 +54,7 @@ VFOX_VERSION=latest E2E_MAX_JOBS=1 go test -v -timeout 55m -run TestE2E ./linux
 
 在原生宿主上，同一条命令也能用，只需要两个前提：Docker Engine（rootful 或 rootless）和 Go 1.27.1，CI 里装的就是这两样。使用 rootless Docker 的用户要把 Docker 客户端指向自己的 socket（`export DOCKER_HOST="unix://$XDG_RUNTIME_DIR/docker.sock"`）；开发容器挂载的 socket 已经替你处理了这种情况。
 
-2026-11-03，一个组合用了 113 秒，整个运行（包括构建镜像）用了 175 秒。两次安装各下载 134 MB。
+2026-11-03，一个组合用了 113 秒，整个运行（包括构建镜像）用了 175 秒。当时两次安装各下载 134 MB；第三次安装 1.12 又多下载 42 MB。
 
 ## 本地检查
 
@@ -106,8 +106,9 @@ docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.12 -color
 8. `vfox use --global` 之后，新开的、已激活 vfox 的 Shell 里就是这个 Gradle：`gradle --version` 报告这个版本，`GRADLE_HOME`（`~/.vfox/sdks/gradle`）解析到 `~/.vfox/cache/gradle/v-9.0.0/gradle-9.0.0`，`gradle` 是其中的 `bin/gradle`，`vfox current gradle` 报告它，带一个任务的构建能跑起来。最后这一项说明解压出来的发行包作为一个整体可以工作：启动脚本保留了可执行权限，`lib/` 下的库和编译脚本的 Groovy 都能加载。
 9. 第二个版本 8.7 经由 `tests/e2e/linux/mirror` 里的镜像替身安装，替身监听容器的回环地址，并向 services.gradle.org 取它要提供的文件。它的行为和真实安装遇到过的镜像一样，所以这次安装证明了 0.1.1 版做不对的三件事。值以斜杠结尾，而替身对带第二个斜杠的路径回应 404。它对 Go 默认的 `User-Agent` 回应 403 和一段 HTML，就像华为云的镜像那样，而 vfox 下载时用的正是这个名字，除非插件另外指定：vfox 把页面当作 zip 保存下来，以 `Checksum error` 结束。它的 `.sha256` 按 `sha256sum` 的写法，`<摘要>  <文件名>` 加一个换行，而 vfox 是原样比较文本的。替身的日志里必须有对 `.sha256` 和对 zip 的 `GET`，都回应 200，并且 vfox 校验所用的摘要必须是 Gradle 发布的那个，同第 7 条。
 10. `vfox use` 在两个版本之间切换：每次 `gradle --version`、`GRADLE_HOME` 和 `gradle` 都跟着变（第 8 条）。`vfox list gradle` 列出两个，`vfox uninstall gradle@8.7` 之后另一个仍然可用。
+11. 第三个版本 1.12 经由第二个替身安装，这个替身提供 zip，对每个 `.sha256` 都回应 404：一个不保存校验和的镜像，腾讯云的镜像对 8.0.1 之后的版本就是这样。替身的日志里必须有对 `.sha256` 的 `GET`（回应 404）和对 zip 的 `GET`（回应 200）。vfox 仍然必须打印 `Verifying checksum <摘要>...`，而不是 `WARNING: Checksum is not provided, skip verify...`，并且摘要必须是 Gradle 发布的那个，同第 7 条：插件从 services.gradle.org 取得它，vfox 把它和从镜像下载到的 zip 的哈希比较。0.1.1 版不给 vfox 摘要，安装以那条警告收场。这个版本只有 42 MB，也不会运行。
 
-矩阵是两个 vfox 渠道，`latest` 和 `main`，在 runner 具备的每种架构上运行。固定的版本是 `9.0.0`（Gradle 从 9.0.0 起带第三位）和 `8.7`（8.x 之前不带）。旧版本一直可以下载，所以这些固定值不会过时。
+矩阵是两个 vfox 渠道，`latest` 和 `main`，在 runner 具备的每种架构上运行。固定的版本是 `9.0.0`（Gradle 从 9.0.0 起带第三位）、`8.7`（8.x 之前不带）和很小的 `1.12`。旧版本一直可以下载，所以这些固定值不会过时。
 
 ## 套件没有覆盖什么
 

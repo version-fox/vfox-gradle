@@ -29,6 +29,15 @@ of it by everything under "Unreleased".
   something else than 200 or 404 stops the install with `checksum request failed:
   HTTP <status> from <address>`. Release 0.1.1 prints only `no installable runtime
   provided`. See [troubleshooting.md](troubleshooting.md).
+- A mirror that keeps no `.sha256` files is verified against the sum of
+  services.gradle.org. Release 0.1.1 asks only the mirror, so for such a mirror vfox
+  prints `WARNING: Checksum is not provided, skip verify...` and trusts the download,
+  whatever it is. Tencent Cloud's mirror is one: it has no `.sha256` for any zip it
+  added after 2023-02-22, 8.7 and 9.8.2 among them. Now the zip of the mirror has to
+  be the one Gradle published, or the install ends in `Checksum error`. If
+  services.gradle.org gives no sum either, such as on a network that blocks it, the
+  install goes on with the warning as before. See
+  [mirror.md](mirror.md#what-a-mirror-has-to-serve).
 - The notes printed by `vfox add gradle` and `vfox info gradle` say that Gradle needs
   a JDK and link to the README.
 

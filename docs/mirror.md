@@ -18,7 +18,7 @@ puts a `/`, the file name and, for the sum, `.sha256` after it. For 8.7:
 | `VFOX_GRADLE_MIRRORS` | vfox downloads | and reads the sum from |
 | --- | --- | --- |
 | not set | `https://services.gradle.org/distributions/gradle-8.7-bin.zip` | the same address and `.sha256` |
-| `https://repo.huaweicloud.com/gradle` | `https://repo.huaweicloud.com/gradle/gradle-8.7-bin.zip` | the same address and `.sha256` |
+| `https://repo.huaweicloud.com/gradle` | `https://repo.huaweicloud.com/gradle/gradle-8.7-bin.zip` | the same address and `.sha256`, or services.gradle.org if the mirror has none |
 
 Slashes at the end of the value are left out, so `https://repo.huaweicloud.com/gradle/`
 asks for the same files. Unreleased: release 0.1.1 puts its `/` after the value as
@@ -54,7 +54,8 @@ $env:VFOX_GRADLE_MIRRORS = "https://repo.huaweicloud.com/gradle"
 
 ## What a mirror has to serve
 
-The files of `services.gradle.org/distributions`, under its own address:
+The files of `services.gradle.org/distributions`, under its own address. The zip is
+the one that has to be there; the `.sha256` may be left out, see below:
 
 ```text
 <mirror>/gradle-8.7-bin.zip.sha256
@@ -69,16 +70,29 @@ The files of `services.gradle.org/distributions`, under its own address:
   the digest with the hash of what it downloaded, and a mirror whose zip differs
   from its digest ends in `Checksum error`. The digest comes from the mirror as
   well, so it guards against a damaged download, not against a mirror that serves
-  a zip and a digest that fit each other. Use a mirror you trust.
+  a zip and a digest that fit each other. Use a mirror you trust. A mirror with no
+  `.sha256` is held to the digest of services.gradle.org instead, see below.
   Unreleased: release 0.1.1 gives vfox the text of the file as it is, and vfox
   compares it as it is, so a newline, capitals or the format of `sha256sum` fail a
   good download with `Checksum error`.
-- A mirror with no `.sha256` files, one that answers 404, still installs: the
-  plugin gives vfox no digest, and vfox prints `Verifying checksum ...` and
-  `WARNING: Checksum is not provided, skip verify...` and trusts the download.
+- A mirror with no `.sha256` files, one that answers 404, still installs, and the
+  zip is still verified: the plugin reads the digest from
+  `https://services.gradle.org/distributions/gradle-8.7-bin.zip.sha256` instead,
+  and vfox compares it with the hash of the zip of the mirror. A zip that is not the
+  one Gradle published ends in `Checksum error`. The mirror is asked first and
+  services.gradle.org only after its 404, so a mirror that has the `.sha256` does not
+  need services.gradle.org at all. If services.gradle.org gives no digest either, as
+  on a network that blocks it, or with an answer that is not a 200 that holds one, the
+  plugin gives vfox none: vfox prints `Verifying checksum ...` and `WARNING: Checksum
+  is not provided, skip verify...` and trusts the download. A network that drops the
+  traffic to services.gradle.org makes the install wait first, see
+  [troubleshooting.md](troubleshooting.md#warning-checksum-is-not-provided-skip-verify).
+  Unreleased: release 0.1.1 asks only the mirror, so every mirror with no `.sha256`
+  ends in that warning.
 - Any other answer for the `.sha256`, such as the 403, 500 or 567 of a gateway or
   a firewall, stops the install and names the address, as in
   `checksum request failed: HTTP 567 from https://mirror.example/gradle/gradle-8.7-bin.zip.sha256`.
+  services.gradle.org is not asked in its place.
   Unreleased: release 0.1.1 prints only `no installable runtime provided`.
 - The download is made as `vfox/<vfox version> vfox-gradle/<plugin version>`.
   Unreleased: release 0.1.1 leaves it to vfox, whose downloads call themselves
@@ -104,6 +118,17 @@ away without the plugin knowing, and one can answer another network differently.
 | CERNET | `https://mirrors.cernet.edu.cn/gradle` | the joint site of the campus mirrors. It redirects each request to one of them, here to Nanjing University's, and vfox follows. Installed 8.7 and verified it |
 
 Each keeps a `.sha256` next to the zip with the same digest as services.gradle.org.
+
+Tencent Cloud's (`https://mirrors.cloud.tencent.com/gradle`) keeps the zips and not
+the sums. Its file listing of 2026-11-04 has 536 `-bin.zip`: the 342 listed on or
+before 2023-02-22 have a `.sha256`, and the 194 listed after it have none, 53 stable
+releases among them, 8.7 and 9.8.2 included. `gradle-9.8.2-bin.zip` is there
+(151,620,138 bytes, the size of Gradle's own) and its `.sha256` answers 404. It fits
+the layout, and the sum comes from services.gradle.org. No install was made through
+the real mirror: it answered 567 to the network this page was written on, and the
+listing was read from another one. The E2E tests use a stand-in that behaves like it,
+see [e2e.md](e2e.md#what-the-suite-verifies).
+
 Some mirrors that people mention do not fit:
 
 - Alibaba Cloud (`https://mirrors.aliyun.com/gradle/distributions`) keeps each zip

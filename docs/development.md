@@ -52,9 +52,16 @@ A few contracts that cost time to find:
   ends in `Checksum error`. The hook sets `User-Agent` in `headers`, to the string
   vfox uses for the requests of a hook (`util:download_headers()`).
 - Without a digest vfox only warns (`Checksum is not provided`) and goes on to
-  download. The hook leaves it out where the request for it answered 404, which a
-  mirror with no `.sha256` files does, and fails for any status but 200 and 404.
-  It used to return nothing for those, and vfox printed `no installable runtime
+  download, and it verifies a download only against a digest the hook gave it. So
+  where a mirror answers 404 for the `.sha256`, which one with no such files does,
+  the hook asks services.gradle.org for the digest of the same release, and vfox
+  verifies the mirror's zip against that. Tencent Cloud's mirror has no `.sha256` for
+  8.7 or 9.8.2, and before this the install ended in the warning. The hook leaves the
+  digest out only where that fails too: the mirror was the server asked for, and a
+  network that needs one may block services.gradle.org, so it is no reason to stop.
+  For the mirror itself the hook fails for any status but 200 and 404, and for a 200
+  that holds no digest, and does not ask services.gradle.org in its place. It used to
+  return nothing for those statuses, and vfox printed `no installable runtime
   provided`.
 - `latest` is not handled by the plugin: vfox core takes the first entry of
   `Available` (`Using latest version: 9.8.2`), so the order that `lib/util.lua`
@@ -75,9 +82,10 @@ A few contracts that cost time to find:
 
 `VFOX_GRADLE_MIRRORS` is read in `PreInstall` with `os.getenv`, with slashes at the
 end of the value left out. Without it the URL is `util.DownloadInfoUrl`. The
-checksum is asked for at the same URL and `.sha256`, so a mirror serves both or
-neither. `Available` never uses the mirror. [mirror.md](mirror.md) is the user's
-side of it.
+checksum is asked for at the same URL and `.sha256`, and where the mirror answers 404
+the hook asks `util.DownloadInfoUrl` for it once more, so a mirror may serve the zips
+alone. `Available` never uses the mirror. [mirror.md](mirror.md) is the user's side of
+it.
 
 ## Tests
 
@@ -106,9 +114,11 @@ that returns a bare string where vfox wants a table fails the test.
   one request to gradle.org, and the one error for a status that is not 200 and for
   a request that fails.
 - `pre_install_test.lua` answers the request for the sum from a table of URLs, and
-  asserts which URL the hook asked for. It covers the URL with and without a mirror,
-  the User-Agent, the forms of the digest file, and every outcome of the request:
-  200, 404, any other status, and a failure of the network.
+  asserts which URLs the hook asked for, in order. It covers the URL with and without a
+  mirror, the User-Agent, the forms of the digest file, and every outcome of the
+  request: 200, 404, any other status, and a failure of the network. For a mirror's
+  404 it covers what services.gradle.org then answers, and that a mirror's other
+  failures do not reach it.
 - `env_keys_test.lua` and `util_test.lua` cover `EnvKeys` and the comparison of
   versions.
 
@@ -159,8 +169,12 @@ test together.
 - Only the binary-only distribution (`-bin`) is installed, not the complete one
   (`-all`). Snapshots and nightlies, which Gradle serves from `distributions-snapshots`,
   are out of reach.
-- The digest comes from the same server as the zip, so it guards against a damaged
-  download, not against a mirror that serves a pair that fits.
+- The digest of a mirror that has a `.sha256` comes from the same server as the zip,
+  so it guards against a damaged download, not against a mirror that serves a pair
+  that fits. A mirror with none is held to the digest of services.gradle.org, which is
+  stricter, and services.gradle.org is not asked where the mirror has one: asking it
+  first would hold every mirror to it, and need it on the networks that use a mirror
+  because it is slow or blocked.
 - vfox saves the body of a download that is answered with anything but 404 as the
   archive, the page of a 403 for one, and reports `Checksum error`
   ([vfox#746](https://github.com/version-fox/vfox/issues/746)). That is vfox's, not
