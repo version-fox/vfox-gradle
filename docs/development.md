@@ -56,13 +56,13 @@ A few contracts that cost time to find:
   where a mirror answers 404 for the `.sha256`, which one with no such files does,
   the hook asks services.gradle.org for the digest of the same release, and vfox
   verifies the mirror's zip against that. Tencent Cloud's mirror has no `.sha256` for
-  8.7 or 9.8.2, and before this the install ended in the warning. The hook leaves the
-  digest out only where that fails too: the mirror was the server asked for, and a
-  network that needs one may block services.gradle.org, so it is no reason to stop.
-  For the mirror itself the hook fails for any status but 200 and 404, and for a 200
-  that holds no digest, and does not ask services.gradle.org in its place. It used to
-  return nothing for those statuses, and vfox printed `no installable runtime
-  provided`.
+  8.7 or 9.8.2, and with release 0.1.1 an install of either ended in the warning. The
+  hook leaves the digest out only where that fails too: the mirror was the server
+  asked for, and a network that needs one may block services.gradle.org, so it is no
+  reason to stop. For the mirror itself the hook fails for any status but 200 and 404,
+  and for a 200 that holds no digest, and does not ask services.gradle.org in its
+  place. Release 0.1.1 returned nothing for those statuses, and vfox printed `no
+  installable runtime provided`.
 - `latest` is not handled by the plugin: vfox core takes the first entry of
   `Available` (`Using latest version: 9.8.2`), so the order that `lib/util.lua`
   gives the list is what `latest` means. vfox keeps the result of `Available` for 12
@@ -211,8 +211,10 @@ points at [changes.md](changes.md) and
 [install-from-source.md](install-from-source.md). After a release, move the entries
 in [changes.md](changes.md) under the new version, with its date, and take the
 remarks and the README paragraph out, in both languages:
-`grep -rn -i -e unreleased -e 未发布 docs README*`. Also search for the number of the
-previous release: a few sentences compare against it without saying "Unreleased".
+`grep -rn -i -e unreleased -e 未发布 docs README*` (the hits in this section stay).
+Also search for the number of the previous release: a few sentences compare against
+it without saying "Unreleased", some of them without the number ("before this", "used
+to"), and a few point at a remark that is going out, such as "see above".
 
 ## Writing the docs
 

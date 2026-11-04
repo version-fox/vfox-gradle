@@ -21,10 +21,7 @@ puts a `/`, the file name and, for the sum, `.sha256` after it. For 8.7:
 | `https://repo.huaweicloud.com/gradle` | `https://repo.huaweicloud.com/gradle/gradle-8.7-bin.zip` | the same address and `.sha256`, or services.gradle.org if the mirror has none |
 
 Slashes at the end of the value are left out, so `https://repo.huaweicloud.com/gradle/`
-asks for the same files. Unreleased: release 0.1.1 puts its `/` after the value as
-it is, and asks for `gradle//gradle-8.7-bin.zip`. A mirror on nginx takes that for
-the same file, and one that does not answers 404. See
-[install-from-source.md](install-from-source.md) to try `main`.
+asks for the same files.
 
 An empty value is the same as unset.
 
@@ -72,9 +69,6 @@ the one that has to be there; the `.sha256` may be left out, see below:
   well, so it guards against a damaged download, not against a mirror that serves
   a zip and a digest that fit each other. Use a mirror you trust. A mirror with no
   `.sha256` is held to the digest of services.gradle.org instead, see below.
-  Unreleased: release 0.1.1 gives vfox the text of the file as it is, and vfox
-  compares it as it is, so a newline, capitals or the format of `sha256sum` fail a
-  good download with `Checksum error`.
 - A mirror with no `.sha256` files, one that answers 404, still installs, and the
   zip is still verified: the plugin reads the digest from
   `https://services.gradle.org/distributions/gradle-8.7-bin.zip.sha256` instead,
@@ -87,18 +81,11 @@ the one that has to be there; the `.sha256` may be left out, see below:
   is not provided, skip verify...` and trusts the download. A network that drops the
   traffic to services.gradle.org makes the install wait first, see
   [troubleshooting.md](troubleshooting.md#warning-checksum-is-not-provided-skip-verify).
-  Unreleased: release 0.1.1 asks only the mirror, so every mirror with no `.sha256`
-  ends in that warning.
 - Any other answer for the `.sha256`, such as the 403, 500 or 567 of a gateway or
   a firewall, stops the install and names the address, as in
   `checksum request failed: HTTP 567 from https://mirror.example/gradle/gradle-8.7-bin.zip.sha256`.
   services.gradle.org is not asked in its place.
-  Unreleased: release 0.1.1 prints only `no installable runtime provided`.
 - The download is made as `vfox/<vfox version> vfox-gradle/<plugin version>`.
-  Unreleased: release 0.1.1 leaves it to vfox, whose downloads call themselves
-  `Go-http-client/1.1`. Huawei Cloud's mirror refuses that name with a 403 and a
-  page of HTML, and vfox saves the page as the zip, so the install ends in
-  `Checksum error`.
 - Redirects are followed.
 - The list comes from gradle.org, not from the mirror: `vfox search gradle` and
   `gradle@latest` see the releases of [gradle.org/releases](https://gradle.org/releases/).
@@ -113,7 +100,7 @@ away without the plugin knowing, and one can answer another network differently.
 
 | Mirror | `VFOX_GRADLE_MIRRORS` | Result |
 | --- | --- | --- |
-| Huawei Cloud | `https://repo.huaweicloud.com/gradle`, or `https://mirrors.huaweicloud.com/gradle` | installed 8.7 from each and verified it. With release 0.1.1: `Checksum error`, see above |
+| Huawei Cloud | `https://repo.huaweicloud.com/gradle`, or `https://mirrors.huaweicloud.com/gradle` | installed 8.7 from each and verified it. With release 0.1.1: `Checksum error`, see [changes.md](changes.md) |
 | Nanjing University | `https://mirror.nju.edu.cn/gradle` | installed 8.7 and 9.0.0 and verified them |
 | CERNET | `https://mirrors.cernet.edu.cn/gradle` | the joint site of the campus mirrors. It redirects each request to one of them, here to Nanjing University's, and vfox follows. Installed 8.7 and verified it |
 

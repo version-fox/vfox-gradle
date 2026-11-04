@@ -21,8 +21,6 @@ gradle --version
 
 `vfox search gradle` 会从新到旧列出各个版本，在交互式终端里还可以直接选一个并安装。
 
-只存在于 `main`、最新发布版里还没有的行为，在下面的页面里标为“未发布”。[docs/zh-CN/changes.md](docs/zh-CN/changes.md) 列出了它们，[docs/zh-CN/install-from-source.md](docs/zh-CN/install-from-source.md) 能让你用上 `main`。
-
 ## Java
 
 Gradle 运行在 JVM 上，所以要先装好 JDK。没有 JDK 时，`gradle` 会停在 `ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.`。JDK 同样可以用 vfox 装，用 [java 插件](https://github.com/version-fox/vfox-java)：
@@ -66,7 +64,7 @@ Gradle 的二进制发行包是同一个 zip，各个系统通用（`bin/gradle`
 - [镜像](docs/zh-CN/mirror.md)：`VFOX_GRADLE_MIRRORS`、镜像要提供什么，以及检查过的镜像
 - [Java toolchain](docs/zh-CN/java-toolchains.md)：Foojay 插件、运行 Gradle 的 JDK 与构建用的 JDK，以及让 Gradle 使用 vfox 装的 JDK
 - [问题排查](docs/zh-CN/troubleshooting.md)：插件和 vfox 的各种提示、代理设置和 Gradle 的位置
-- [变更记录](docs/zh-CN/changes.md)：每个版本改了什么，以及只有 `main` 才有的内容
+- [变更记录](docs/zh-CN/changes.md)：每个版本改了什么
 
 **参与开发**
 

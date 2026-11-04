@@ -16,11 +16,9 @@
 
 校验和请求得到了回应，但状态码既不是 200 也不是 404：信息里有状态码，也有地址。是镜像，或者挡在镜像前面的防火墙、门户网站拒绝了这个请求。可以用 `curl` 试这个地址，也可以取消设置 `VFOX_GRADLE_MIRRORS` 改用 services.gradle.org，或者换一个镜像，见 [mirror.md](mirror.md#检查过的镜像)。
 
-未发布：0.1.1 版遇到同样的情况，只打印 `no installable runtime provided` 和 `failed to install gradle`，没有说是哪个请求、什么状态码。想试用 `main`，见 [install-from-source.md](install-from-source.md)。
-
 ### `no SHA-256 digest in <地址>`
 
-校验和请求回应了 200，但回应的开头没有 64 位的十六进制摘要：可能是门户网站或防火墙的页面，也可能是被截断的文件。用 `curl` 打开这个地址看看。见 [mirror.md](mirror.md#镜像要提供什么)。这条提示同样是未发布的：0.1.1 版把回应的内容原样当作校验和交给 vfox，安装最终以 `Checksum error` 结束。
+校验和请求回应了 200，但回应的开头没有 64 位的十六进制摘要：可能是门户网站或防火墙的页面，也可能是被截断的文件。用 `curl` 打开这个地址看看。见 [mirror.md](mirror.md#镜像要提供什么)。
 
 ## vfox 的提示
 
@@ -30,15 +28,13 @@
 
 ### `Checksum error, file: <路径>`
 
-vfox 打印 `Checksum error, file: <路径>`，接着是 `checksum error` 和 `failed to install gradle`，并在解压之前就停了下来，所以什么也没有装上。下载的内容和插件交给 vfox 的 SHA-256 校验和对不上。最常见的原因是下载中断或在路上损坏：重试一次。如果经由镜像时总是这样，可能是镜像提供了另一个文件，或者一段错误页面：vfox 曾把一个 403 的页面当作 zip 保存下来，然后停在这里（0.1.1 版加华为云的镜像，见 [mirror.md](mirror.md#镜像要提供什么)，以及 [vfox#746](https://github.com/version-fox/vfox/issues/746)）。取消设置 `VFOX_GRADLE_MIRRORS`，看看 services.gradle.org 能不能装上。
+vfox 打印 `Checksum error, file: <路径>`，接着是 `checksum error` 和 `failed to install gradle`，并在解压之前就停了下来，所以什么也没有装上。下载的内容和插件交给 vfox 的 SHA-256 校验和对不上。最常见的原因是下载中断或在路上损坏：重试一次。如果经由镜像时总是这样，可能是镜像提供了另一个文件，或者一段错误页面：vfox 曾把一个 403 的页面当作 zip 保存下来，然后停在这里（0.1.1 版加华为云的镜像，见[变更记录](changes.md)，以及 [vfox#746](https://github.com/version-fox/vfox/issues/746)）。取消设置 `VFOX_GRADLE_MIRRORS`，看看 services.gradle.org 能不能装上。
 
 ### `WARNING: Checksum is not provided, skip verify...`
 
 插件没有给 vfox 校验和，所以 vfox 只能信任下载的内容。用镜像时，下面两件事同时发生了，见 [mirror.md](mirror.md#镜像要提供什么)：镜像对 `.sha256` 回应 404（没有这类文件的镜像就是这样），并且 services.gradle.org 也给不出这个版本的校验和。后者通常是因为网络挡住了 services.gradle.org，用 `curl -IL https://services.gradle.org/distributions/gradle-8.7-bin.zip.sha256` 可以看出来；版本不存在时也是这样。不用镜像时，只看后者。services.gradle.org 上每个版本都有校验和，vfox 打印的会是 `Verifying checksum <摘要>...`。
 
 网络丢弃发往 services.gradle.org 的流量（而不是拒绝连接）时，安装要先等 vfox 的请求超时，之后才出现这条警告：默认是 30 秒，2026-11-04 用一个接受连接却从不回应的代理测得。`vfox config plugin.http.timeout 5s` 可以缩短它，对所有插件的请求都生效；用它之后，安装 1.12 大约少用了 20 秒。
-
-未发布：0.1.1 版只问镜像，所以每个没有 `.sha256` 文件的镜像都会停在这里，腾讯云的也不例外，尽管 services.gradle.org 上有校验和。想试用 `main`，见 [install-from-source.md](install-from-source.md)。
 
 ### `install requires specifying a version for gradle`
 

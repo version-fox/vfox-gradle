@@ -4,11 +4,9 @@
 
 What changed in each release, as a user notices it. GitHub's
 [release pages](https://github.com/version-fox/vfox-gradle/releases) list the
-releases. The newest release at the time of writing is 0.1.1, and `main` is ahead
-of it by everything under "Unreleased".
-[install-from-source.md](install-from-source.md) gets you those changes now.
+releases.
 
-## Unreleased
+## 0.1.2 (2026-11-04)
 
 - `VFOX_GRADLE_MIRRORS` works with a value that ends in a slash, as the README
   wrote it. Release 0.1.1 asks for `<mirror>//gradle-8.7-bin.zip`, which a mirror on
@@ -40,6 +38,10 @@ of it by everything under "Unreleased".
   [mirror.md](mirror.md#what-a-mirror-has-to-serve).
 - The notes printed by `vfox add gradle` and `vfox info gradle` say that Gradle needs
   a JDK and link to the README.
+
+The rest is not in the plugin that vfox installs: the tests, the lint and license
+checks, a dev container, and the documentation in English and Chinese, which includes
+a page on [Java toolchains](java-toolchains.md).
 
 ## 0.1.1 (2024-04-01)
 

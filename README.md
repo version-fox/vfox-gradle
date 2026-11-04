@@ -31,10 +31,6 @@ default.
 `vfox search gradle` lists the releases, newest first, and in an interactive
 terminal it lets you pick one and installs it.
 
-Behavior that only exists on `main` and not in the latest release is marked
-"Unreleased" in the pages below. [docs/changes.md](docs/changes.md) lists it, and
-[docs/install-from-source.md](docs/install-from-source.md) gets you `main`.
-
 ## Java
 
 Gradle runs on a JVM, so a JDK has to be installed first. Without one, `gradle`
@@ -101,7 +97,7 @@ tested in CI.
 - [Mirror](docs/mirror.md): `VFOX_GRADLE_MIRRORS`, what a mirror has to serve, and mirrors that were checked
 - [Java toolchains](docs/java-toolchains.md): the Foojay plugin, the JDK Gradle runs on and the one it builds with, and letting Gradle use the JDKs vfox installed
 - [Troubleshooting](docs/troubleshooting.md): the messages the plugin and vfox print, proxies, and where Gradle is
-- [Changes](docs/changes.md): what each release changed, and what only `main` has
+- [Changes](docs/changes.md): what each release changed
 
 **Working on the plugin**
 

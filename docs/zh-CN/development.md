@@ -38,7 +38,7 @@ vfox 加载 `metadata.lua`，命令需要时调用相应的钩子，并向钩子
 
 - `PreInstall` 返回 `version`、`url`、`sha256` 和 `headers`。`version` 是安装后的名字，钩子按输入原样返回它。摘要那个键的名字就是算法，vfox 用这个算法对下载的文件求哈希，再把十六进制摘要和拿到的文本原样比较：小写，前后什么也没有，否则无论下载的内容如何，安装都会因 `Checksum error` 失败。所以钩子要从读到的文件里把摘要取出来（镜像可能是按 `sha256sum` 的格式写的），并转成小写。
 - 下载是 vfox 自己发起的，除非 `headers` 另有说明，否则自称 `Go-http-client/1.1`。拒绝 Go 默认名字、回应 403 和一段 HTML 的镜像（华为云的就是，2026-11-03），那段页面会被当作 zip 保存下来，安装以 `Checksum error` 结束。钩子在 `headers` 里设置了 `User-Agent`，用的是 vfox 为钩子发出的请求使用的字符串（`util:download_headers()`）。
-- 没有摘要时 vfox 只是警告（`Checksum is not provided`），然后继续下载，而且它只会拿钩子给它的摘要去校验下载。所以镜像对 `.sha256` 回应 404（没有这类文件的镜像就是这样）时，钩子会向 services.gradle.org 要同一个版本的摘要，vfox 再用它校验镜像上的 zip。腾讯云的镜像没有 8.7 和 9.8.2 的 `.sha256`，在这之前，装它们都以那条警告收场。只有这一步也落空时，钩子才不给摘要：被问的服务器是镜像，而需要镜像的网络可能挡住了 services.gradle.org，这不是停下安装的理由。对镜像本身，钩子在 200 和 404 以外的状态码、以及没有摘要的 200 时报错，并且不会改去问 services.gradle.org。它以前对这些状态码什么也不返回，vfox 就只打印 `no installable runtime provided`。
+- 没有摘要时 vfox 只是警告（`Checksum is not provided`），然后继续下载，而且它只会拿钩子给它的摘要去校验下载。所以镜像对 `.sha256` 回应 404（没有这类文件的镜像就是这样）时，钩子会向 services.gradle.org 要同一个版本的摘要，vfox 再用它校验镜像上的 zip。腾讯云的镜像没有 8.7 和 9.8.2 的 `.sha256`，用 0.1.1 版装它们都以那条警告收场。只有这一步也落空时，钩子才不给摘要：被问的服务器是镜像，而需要镜像的网络可能挡住了 services.gradle.org，这不是停下安装的理由。对镜像本身，钩子在 200 和 404 以外的状态码、以及没有摘要的 200 时报错，并且不会改去问 services.gradle.org。0.1.1 版对这些状态码什么也不返回，vfox 就只打印 `no installable runtime provided`。
 - `latest` 不由插件处理：vfox 核心取 `Available` 的第一项（`Using latest version: 9.8.2`），所以 `lib/util.lua` 给列表排的顺序，就是 `latest` 的含义。vfox 把 `Available` 的结果缓存 12 小时（`vfox config cache.availableHookDuration`）。
 - `PreUse` 什么也不返回，由 vfox 自己把输入的内容和已安装的版本匹配，按版本号的开头匹配：`gradle@8` 选中已安装的最新 8.x，`gradle@8.1` 选不中 8.14。
 - `EnvKeys` 拿到的 `ctx.path` 是链接 `~/.vfox/sdks/gradle`，vfox 一直让它指向正在使用的版本，所以无论选中哪个版本，`GRADLE_HOME` 的值都一样。它设置 `GRADLE_HOME` 和 `PATH`，没有 `JAVA_HOME` 之类的东西。
@@ -100,7 +100,7 @@ vfox plugin run . EnvKeys --input '{"path":"C:\\vfox\\gradle-8.7"}' --os windows
 
 ### 发布之后
 
-`main` 比最新发布版更新期间，文档用“未发布”（英文是“Unreleased”）标记新的内容：条目放在 [changes.md](changes.md) 顶部的“未发布”标题下；描述新行为的页面加一条以“未发布：X.Y.Z 版”开头的说明，写明最新发布版的行为；README 里有一段解释这个标记，并指向 [changes.md](changes.md) 和 [install-from-source.md](install-from-source.md)。发布之后，把 [changes.md](changes.md) 里的条目移到新版本下面，写上发布日期，并把这些说明和 README 里的那一段去掉，两种语言都要处理：`grep -rn -i -e unreleased -e 未发布 docs README*`。还要搜索上一个发布版的版本号：有几句话拿它做了对比，却没有写“未发布”。
+`main` 比最新发布版更新期间，文档用“未发布”（英文是“Unreleased”）标记新的内容：条目放在 [changes.md](changes.md) 顶部的“未发布”标题下；描述新行为的页面加一条以“未发布：X.Y.Z 版”开头的说明，写明最新发布版的行为；README 里有一段解释这个标记，并指向 [changes.md](changes.md) 和 [install-from-source.md](install-from-source.md)。发布之后，把 [changes.md](changes.md) 里的条目移到新版本下面，写上发布日期，并把这些说明和 README 里的那一段去掉，两种语言都要处理：`grep -rn -i -e unreleased -e 未发布 docs README*`（本节里的命中要保留）。还要搜索上一个发布版的版本号：有几句话拿它做了对比，却没有写“未发布”，有的连版本号也没写（“在这之前”“以前”），还有几处指向即将删掉的说明，比如“见上文”。
 
 ## 编写文档
 

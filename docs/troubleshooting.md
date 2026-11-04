@@ -25,17 +25,11 @@ that sits in front of one is refusing the request. Try the address with `curl`,
 unset `VFOX_GRADLE_MIRRORS` to use services.gradle.org, or pick another mirror,
 see [mirror.md](mirror.md#mirrors-that-were-checked).
 
-Unreleased: release 0.1.1 prints only `no installable runtime provided` and
-`failed to install gradle` for the same thing, and nothing says which request or
-status. See [install-from-source.md](install-from-source.md) to try `main`.
-
 ### `no SHA-256 digest in <address>`
 
 The request for the sum was answered 200, but what came back holds no 64-digit
 hexadecimal digest at its start: the page of a portal or a firewall, or a file cut
 short. Open the address with `curl`. See [mirror.md](mirror.md#what-a-mirror-has-to-serve).
-This message is Unreleased too: release 0.1.1 gives vfox whatever came back as the
-sum, and the install ends in `Checksum error`.
 
 ## Messages from vfox
 
@@ -56,7 +50,7 @@ installed. The download does not match the SHA-256 sum the plugin gave vfox. A
 download cut short or damaged on the way is the usual cause: try again. If it
 keeps happening through a mirror, the mirror may serve another file, or an error
 page: vfox saved the page of a 403 as the zip, and ended here (release 0.1.1 and
-Huawei Cloud's mirror, see [mirror.md](mirror.md#what-a-mirror-has-to-serve), and
+Huawei Cloud's mirror, see [changes.md](changes.md), and
 [vfox#746](https://github.com/version-fox/vfox/issues/746)). Unset
 `VFOX_GRADLE_MIRRORS` to see whether services.gradle.org installs.
 
@@ -77,10 +71,6 @@ holds the install up for the request timeout of vfox before the warning: 30 seco
 by default, measured on 2026-11-04 with a proxy that accepted the connection and never
 answered. `vfox config plugin.http.timeout 5s` shortens it, for the requests of every
 plugin; an install of 1.12 took about 20 seconds less with it.
-
-Unreleased: release 0.1.1 asks only the mirror, so every mirror with no `.sha256`
-files ends here, Tencent Cloud's among them, though services.gradle.org has the sum.
-See [install-from-source.md](install-from-source.md) to try `main`.
 
 ### `install requires specifying a version for gradle`
 
