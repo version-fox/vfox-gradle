@@ -91,6 +91,21 @@ while 8.14 is installed. See [versions.md](versions.md#what-vfox-use-selects).
 set `JAVA_HOME`, see [Java](../README.md#java) in the README. The plugin does not
 set `JAVA_HOME`.
 
+### `Cannot find a Java installation on your machine (...) matching: {languageVersion=17, ...}. Toolchain download repositories have not been configured.`
+
+The build asks for a JDK that Gradle did not find, and nothing tells Gradle where to
+download one. Gradle does not look in vfox's directories, so a JDK that vfox installed
+is not found unless you tell Gradle, and without the Foojay plugin in
+`settings.gradle.kts` the build cannot download one. Add the plugin, or let Gradle use
+the JDK, see [java-toolchains.md](java-toolchains.md#gradle-does-not-look-in-vfoxs-directories)
+and [java-toolchains.md](java-toolchains.md#letting-gradle-use-the-jdks-vfox-installed).
+
+### `Class org.gradle.jvm.toolchain.JvmVendorSpec does not have member field '... IBM_SEMERU'`
+
+The build pins a Foojay plugin older than 1.0.0, and the Gradle in use is 9.x: 0.10.0
+with 9.8.2 was run. Move the build to 1.0.0 or later, see
+[java-toolchains.md](java-toolchains.md#the-foojay-plugin-and-the-gradle-that-vfox-selects).
+
 ## Network
 
 The plugin reads the list from `gradle.org` and the sum from
@@ -128,6 +143,9 @@ supported.
   without `--global` or `--project` applies to the current shell only, and a
   `gradle` in an earlier directory of the `PATH` wins. `vfox current gradle` shows
   what vfox has selected, `no current version of gradle` when it is nothing.
+- **A build downloaded a JDK although vfox has installed it.** Gradle looks for
+  installed JDKs in a fixed set of places, and vfox's directories are not among them,
+  see [java-toolchains.md](java-toolchains.md#gradle-does-not-look-in-vfoxs-directories).
 
 ## Where Gradle is
 
