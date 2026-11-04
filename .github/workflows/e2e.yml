@@ -1,0 +1,63 @@
+# Copyright 2026 Han Li and contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: E2E
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  # A new push to a pull request replaces the run of the push before it. Every
+  # commit on main gets a group of its own instead: in one shared group a newer
+  # commit cancels the run of the older, and re-running the older cancels the
+  # newer in turn, so one of the two never ends with a result.
+  group: e2e-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# The suite runs natively, the way the dev container runs it locally: Go at the
+# dev container's version (.devcontainer/Dockerfile) plus the runner's stock
+# Docker, with the same TESTCONTAINERS_RYUK_DISABLED knob. Linux containers only:
+# see docs/e2e.md for what the suite covers and what it leaves out.
+
+jobs:
+  e2e-linux:
+    if: github.repository == 'version-fox/vfox-gradle'
+    name: Linux container (${{ matrix.runs-on }})
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [ubuntu-latest, ubuntu-26.04-arm]
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 60
+    env:
+      # Ryuk publishes a port on the host daemon and waits for the suite to
+      # dial back to it; the dev container disables it (it runs
+      # Docker-out-of-Docker), and CI matches so both paths stay identical.
+      # Containers are terminated explicitly via t.Cleanup instead.
+      TESTCONTAINERS_RYUK_DISABLED: "true"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.1
+          cache: false
+      - run: go test -v -timeout 55m -run TestE2E ./linux
+        working-directory: tests/e2e
