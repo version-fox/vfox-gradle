@@ -150,6 +150,16 @@ such paths since 1.0.13 ([vfox#712](https://github.com/version-fox/vfox/pull/712
 the `latest` release and `main` both run against it, and the distribution is unpacked
 below it.
 
+On 2026-11-04, in the first run of this suite in CI
+([vfox-gradle#7](https://github.com/version-fox/vfox-gradle/pull/7)), one combination
+took 56 and 58 seconds on `windows-latest` (`latest`, then `main`) and 90 and 86 on
+`windows-11-arm`. The `go test` step took 3 min 48 s and 5 min 46 s, the image build
+included: pulling servercore took 2 min 4 s and 3 min 10 s, and `bootstrap-tools.ps1`
+18 s and 47 s. The jobs took 4 min 26 s and 9 min 9 s. The second includes 1 min 57 s
+for the Docker engine, which `install-docker-arm64.ps1` built from source because the
+cache had no entry yet; with the cache it took 13 seconds in vfox-java's run of
+2026-11-03. The two installs of a combination download 136 MB each.
+
 ### x64
 
 All commands below run in PowerShell 7. If it is not installed yet, install it first

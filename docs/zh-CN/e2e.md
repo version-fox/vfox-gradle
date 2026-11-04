@@ -74,6 +74,8 @@ CI 跳过了 runner 镜像：在 vfox-java 里，在 `windows-11-arm` 上解压�
 
 每个组合运行时，`VFOX_HOME` 都设为带空格的路径（`C:\Users\John Doe\.vfox`），以复现 [vfox-flutter#33](https://github.com/version-fox/vfox-flutter/issues/33)。vfox 从 1.0.13 起支持这样的路径（[vfox#712](https://github.com/version-fox/vfox/pull/712)），所以 `latest` 发布版和 `main` 都在这个路径下运行，发行包也解压在它下面。
 
+2026-11-04，这套测试在 CI 里的第一次运行（[vfox-gradle#7](https://github.com/version-fox/vfox-gradle/pull/7)）中，一个组合在 `windows-latest` 上用了 56 秒和 58 秒（先 `latest`，后 `main`），在 `windows-11-arm` 上用了 90 秒和 86 秒。`go test` 这一步分别用了 3 分 48 秒和 5 分 46 秒，其中包括构建镜像：拉取 servercore 用了 2 分 4 秒和 3 分 10 秒，`bootstrap-tools.ps1` 用了 18 秒和 47 秒。整个任务分别用了 4 分 26 秒和 9 分 9 秒；后者包含 1 分 57 秒用于 Docker 引擎，因为缓存里还没有，`install-docker-arm64.ps1` 从源码构建了它；有缓存时，这一步在 vfox-java 2026-11-03 的一次运行里用了 13 秒。一个组合的两次安装各下载 136 MB。
+
 ### x64
 
 下面所有命令都在 PowerShell 7 中运行。如果还没有安装，请先装上（这一条引导命令可以在自带的 Windows PowerShell 里运行）：
