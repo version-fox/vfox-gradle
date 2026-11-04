@@ -53,6 +53,12 @@ Which Java each Gradle release runs on is in Gradle's
 on 2026-11-03, 9.8.2 needs Java 17 to 27, and the 8.14 releases run on Java 8 to 24.
 The plugin sets `GRADLE_HOME` and `PATH`, and leaves `JAVA_HOME` to you.
 
+A build that asks Gradle for a JDK of its own (`java.toolchain`) and lets the Foojay
+plugin download it works with a Gradle that vfox installed, and the plugin takes no
+part in it. [docs/java-toolchains.md](docs/java-toolchains.md) separates the JDK Gradle
+runs on from the one the build uses, explains why Gradle does not see the other JDKs
+that vfox installed, and shows how to make it use them.
+
 A project that has the Gradle wrapper (`./gradlew`) downloads the Gradle it names
 by itself, and does not use the release vfox selected. The plugin is for the
 `gradle` command.
@@ -93,6 +99,7 @@ tested in CI.
 
 - [Versions and names](docs/versions.md): how to write a version, `latest`, release candidates, and what `vfox use` selects
 - [Mirror](docs/mirror.md): `VFOX_GRADLE_MIRRORS`, what a mirror has to serve, and mirrors that were checked
+- [Java toolchains](docs/java-toolchains.md): the Foojay plugin, the JDK Gradle runs on and the one it builds with, and letting Gradle use the JDKs vfox installed
 - [Troubleshooting](docs/troubleshooting.md): the messages the plugin and vfox print, proxies, and where Gradle is
 - [Changes](docs/changes.md): what each release changed, and what only `main` has
 

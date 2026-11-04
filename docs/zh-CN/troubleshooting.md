@@ -54,6 +54,14 @@ vfox 打印 `Checksum error, file: <路径>`，接着是 `checksum error` 和 `f
 
 `gradle` 运行在 JVM 上，却没有找到。请安装 JDK 并把它放进 `PATH`，或者设置 `JAVA_HOME`，见 README 里的 [Java](../../README_CN.md#java)。插件不会设置 `JAVA_HOME`。
 
+### `Cannot find a Java installation on your machine (...) matching: {languageVersion=17, ...}. Toolchain download repositories have not been configured.`
+
+构建要一个 Gradle 没有找到的 JDK，而且没有任何设置告诉 Gradle 去哪里下载。Gradle 不会去 vfox 的目录里找，所以 vfox 装的 JDK 除非你告诉 Gradle，否则找不到；`settings.gradle.kts` 里没有 Foojay 插件时，构建也无法自己下载。请加上这个插件，或者让 Gradle 用上那个 JDK，见 [java-toolchains.md](java-toolchains.md#gradle-不会去-vfox-的目录里找) 和 [java-toolchains.md](java-toolchains.md#让-gradle-用-vfox-装的-jdk)。
+
+### `Class org.gradle.jvm.toolchain.JvmVendorSpec does not have member field '... IBM_SEMERU'`
+
+构建固定使用了早于 1.0.0 的 Foojay 插件，而正在使用的 Gradle 是 9.x：运行过的是 9.8.2 配 0.10.0。把构建改用 1.0.0 或更高版本，见 [java-toolchains.md](java-toolchains.md#foojay-插件与-vfox-选中的-gradle)。
+
 ## 网络
 
 插件从 `gradle.org` 读取版本列表，从 `services.gradle.org` 读取校验和，vfox 也从那里下载 zip。对一个版本来说，这个地址会重定向：校验和重定向到 `downloads.gradle.org`，zip 重定向到 Gradle 在 `github.com` 上的发布，再由 `release-assets.githubusercontent.com` 提供（2026-11-03）。网络挡住其中任何一个主机，安装就会在需要它的那一步失败。想换一个下载地址，见 [mirror.md](mirror.md)。
@@ -73,6 +81,7 @@ vfox config proxy.url http://127.0.0.1:7890
 - **`gradle@latest` 不是 gradle.org 上宣布的最新的东西。** `latest` 是 `vfox search gradle` 列出的第一个版本，而候选版本不在列表里。
 - **项目用的 Gradle 不是你选中的那个。** 带有 Gradle Wrapper（`./gradlew`）的项目会下载它指定的 Gradle，`gradle` 命令根本没有参与。
 - **`gradle --version` 显示的不是你选中的 Gradle。** 不带 `--global` 或 `--project` 的 `vfox use` 只对当前 Shell 有效，而且 `PATH` 里更靠前的目录里的 `gradle` 会胜出。`vfox current gradle` 会显示 vfox 选中的是什么，什么也没选时显示 `no current version of gradle`。
+- **构建下载了一个 vfox 已经装了的 JDK。** Gradle 在固定的几个位置找已安装的 JDK，vfox 的目录不在其中，见 [java-toolchains.md](java-toolchains.md#gradle-不会去-vfox-的目录里找)。
 
 ## Gradle 在哪里
 

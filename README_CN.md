@@ -35,6 +35,8 @@ vfox use --global java@21-tem
 
 每个 Gradle 版本能在哪些 Java 上运行，见 Gradle 的[兼容性矩阵](https://docs.gradle.org/current/userguide/compatibility.html)：2026-11-03 时，9.8.2 需要 Java 17 到 27，8.14 系列可以在 Java 8 到 24 上运行。插件设置 `GRADLE_HOME` 和 `PATH`，`JAVA_HOME` 留给你自己设置。
 
+构建用 `java.toolchain` 向 Gradle 要它自己的 JDK、再让 Foojay 插件去下载的做法，在 vfox 安装的 Gradle 上照常工作，插件不参与其中。[docs/zh-CN/java-toolchains.md](docs/zh-CN/java-toolchains.md) 区分了运行 Gradle 的 JDK 和构建使用的 JDK，说明了 Gradle 为什么看不到 vfox 装的其他 JDK，以及怎样让它用上。
+
 带有 Gradle Wrapper（`./gradlew`）的项目，会自己下载它指定的 Gradle，不使用 vfox 选中的版本。这个插件服务的是 `gradle` 命令。
 
 ## 版本与命名
@@ -62,6 +64,7 @@ Gradle 的二进制发行包是同一个 zip，各个系统通用（`bin/gradle`
 
 - [版本与命名](docs/zh-CN/versions.md)：怎样写版本、`latest`、候选版本，以及 `vfox use` 会选中什么
 - [镜像](docs/zh-CN/mirror.md)：`VFOX_GRADLE_MIRRORS`、镜像要提供什么，以及检查过的镜像
+- [Java toolchain](docs/zh-CN/java-toolchains.md)：Foojay 插件、运行 Gradle 的 JDK 与构建用的 JDK，以及让 Gradle 使用 vfox 装的 JDK
 - [问题排查](docs/zh-CN/troubleshooting.md)：插件和 vfox 的各种提示、代理设置和 Gradle 的位置
 - [变更记录](docs/zh-CN/changes.md)：每个版本改了什么，以及只有 `main` 才有的内容
 
