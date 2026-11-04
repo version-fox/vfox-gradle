@@ -146,7 +146,7 @@ error it swallows.
 The container tests, lint and license headers are in [e2e.md](e2e.md#local-checks).
 Lua is formatted with StyLua (`stylua.toml`: 4 spaces, 120 columns), checked by LuaLS
 at `Warning` level (`.luarc.json` declares `PLUGIN` and `RUNTIME`), and the
-workflows by actionlint. Source files (Lua, Go, YAML, TOML and the Dockerfiles)
+workflows by actionlint. Source files (Lua, Go, YAML, TOML, PowerShell and the Dockerfiles)
 carry the license header, Markdown and JSON do not.
 
 ## Refreshing the fixture
@@ -180,8 +180,9 @@ test together.
   ([vfox#746](https://github.com/version-fox/vfox/issues/746)). That is vfox's, not
   the plugin's, and the `User-Agent` above is what keeps the plugin clear of the one
   case that was met.
-- The container tests cover Linux only, amd64 and arm64. Windows containers and
-  macOS have no job, see [e2e.md](e2e.md#what-the-suite-leaves-out).
+- The container tests cover Linux and Windows containers, amd64 and arm64. macOS has
+  no job, and the Windows suite leaves out the checks that use the mirror stand-in, see
+  [e2e.md](e2e.md#what-the-suite-leaves-out).
 
 ## Releasing
 

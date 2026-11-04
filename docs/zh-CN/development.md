@@ -78,7 +78,7 @@ vfox plugin run . EnvKeys --input '{"path":"C:\\vfox\\gradle-8.7"}' --os windows
 
 `vfox --debug <命令>` 会显示 vfox 对钩子做了什么，被它吞掉的错误就靠这个找出来。
 
-容器测试、lint 和许可证头见 [e2e.md](e2e.md#本地检查)。Lua 用 StyLua 格式化（`stylua.toml`：4 个空格，120 列），用 LuaLS 在 `Warning` 级别检查（`.luarc.json` 声明了 `PLUGIN` 和 `RUNTIME`），工作流用 actionlint 检查。源文件（Lua、Go、YAML、TOML 和 Dockerfile）带许可证头，Markdown 和 JSON 不带。
+容器测试、lint 和许可证头见 [e2e.md](e2e.md#本地检查)。Lua 用 StyLua 格式化（`stylua.toml`：4 个空格，120 列），用 LuaLS 在 `Warning` 级别检查（`.luarc.json` 声明了 `PLUGIN` 和 `RUNTIME`），工作流用 actionlint 检查。源文件（Lua、Go、YAML、TOML、PowerShell 和 Dockerfile）带许可证头，Markdown 和 JSON 不带。
 
 ## 更新夹具
 
@@ -90,7 +90,7 @@ vfox plugin run . EnvKeys --input '{"path":"C:\\vfox\\gradle-8.7"}' --os windows
 - 只安装 binary-only 发行包（`-bin`），不安装 complete 版本（`-all`）。快照和每夜构建由 Gradle 放在 `distributions-snapshots` 下，装不上。
 - 有 `.sha256` 的镜像，摘要和 zip 来自同一台服务器，所以它防的是下载损坏，防不住镜像同时提供一对互相吻合的文件。没有 `.sha256` 的镜像则由 services.gradle.org 的摘要来约束，更严格。镜像有 `.sha256` 时不会去问 services.gradle.org：先问它，就会让每个镜像都受它约束，也会让那些因为它太慢或被挡住才用镜像的网络依赖它。
 - 下载的回应只要不是 404，vfox 就把回应的内容当作压缩包保存下来，比如 403 的页面，然后报告 `Checksum error`（[vfox#746](https://github.com/version-fox/vfox/issues/746)）。这是 vfox 的问题，不是插件的；上面的 `User-Agent` 让插件避开了遇到过的那一种情形。
-- 容器测试只覆盖 Linux，包括 amd64 和 arm64。Windows 容器和 macOS 没有对应的任务，见 [e2e.md](e2e.md#套件没有覆盖什么)。
+- 容器测试覆盖 Linux 和 Windows 容器，包括 amd64 和 arm64。macOS 没有对应的任务，Windows 套件也没有包含用到镜像替身的检查，见 [e2e.md](e2e.md#套件没有覆盖什么)。
 
 ## 发布
 

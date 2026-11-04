@@ -86,8 +86,8 @@ layout a mirror has to have, the mirrors that were checked, and PowerShell.
 
 Gradle's binary distribution is one zip for every system (`bin/gradle` and
 `bin/gradle.bat`), and the plugin has no code of its own for any of them. The
-[E2E tests](docs/e2e.md) run on Linux, amd64 and arm64; Windows and macOS are not
-tested in CI.
+[E2E tests](docs/e2e.md) install and run Gradle in Linux containers and in Windows
+containers, amd64 and arm64; macOS is not tested in CI.
 
 ## Documentation
 
