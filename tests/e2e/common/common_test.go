@@ -102,17 +102,17 @@ func TestResolveVersion(t *testing.T) {
 	}
 }
 
-// The two pinned releases are two releases, one written each way Gradle names
-// them, and none of the names no release has is one of them.
+// The pinned releases are three releases, the first two written each way Gradle
+// names them, and none of the names no release has is one of them.
 func TestPins(t *testing.T) {
-	if DefaultVersion == MirrorVersion {
-		t.Fatalf("both pins are %s: the second install would find the first", DefaultVersion)
+	if DefaultVersion == MirrorVersion || DefaultVersion == NoSumVersion || MirrorVersion == NoSumVersion {
+		t.Fatalf("the pins %s, %s and %s must differ: a later install would find an earlier one", DefaultVersion, MirrorVersion, NoSumVersion)
 	}
 	if !strings.HasSuffix(DefaultVersion, ".0") || strings.Count(MirrorVersion, ".") != 1 {
 		t.Errorf("pins %s and %s should be one written with the trailing .0 and one without", DefaultVersion, MirrorVersion)
 	}
 	for _, missing := range MissingVersions {
-		if missing == DefaultVersion || missing == MirrorVersion {
+		if missing == DefaultVersion || missing == MirrorVersion || missing == NoSumVersion {
 			t.Errorf("%s is pinned and listed as missing", missing)
 		}
 	}
@@ -262,6 +262,11 @@ func TestRequests(t *testing.T) {
 		t.Errorf("Requests = %v, want %v", got, want)
 	}
 	CheckMirrorServed(t, want, "8.7")
+}
+
+func TestCheckMirrorKeptNoSum(t *testing.T) {
+	log := "GET / 404\nGET /gradle-1.12-bin.zip.sha256 404\nGET /gradle-1.12-bin.zip 200\n"
+	CheckMirrorKeptNoSum(t, Requests(log), "1.12")
 }
 
 func TestContainerName(t *testing.T) {

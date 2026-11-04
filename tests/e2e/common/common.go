@@ -48,6 +48,15 @@ const DefaultVersion = "9.0.0"
 // releases, and one that runs on the Java 21 of the image.
 const MirrorVersion = "8.7"
 
+// NoSumVersion is the release every combo installs last, through the stand-in
+// for a mirror that keeps the zips and no .sha256 files, which is what Tencent
+// Cloud's mirror has for the releases after 8.0.1. vfox has to verify the
+// download against the digest Gradle publishes, and print no warning. That is
+// about the digest and not about the release, so the release is a small one,
+// 1.12 at 42 MB where the other two are 134 MB, and it is installed and never
+// run.
+const NoSumVersion = "1.12"
+
 // MissingVersions are names no release has, which `vfox install` must reject:
 // a release that does not exist (99.0), and two that exist without the .0 the
 // name is given here (8.7 and 8.14 are the releases, 8.7.0 and 8.14.0 are not).
@@ -159,15 +168,15 @@ func RetryAttempts() int {
 }
 
 // ResolveVersion honours $GRADLE_VERSION, else DefaultVersion. It must differ
-// from MirrorVersion: the second install would find the first.
+// from MirrorVersion and NoSumVersion: the later install would find the first.
 func ResolveVersion(t *testing.T) string {
 	t.Helper()
 	version := strings.TrimSpace(os.Getenv("GRADLE_VERSION"))
 	if version == "" {
 		return DefaultVersion
 	}
-	if version == MirrorVersion {
-		t.Fatalf("GRADLE_VERSION=%s is the release the suite installs through the mirror; pick another", version)
+	if version == MirrorVersion || version == NoSumVersion {
+		t.Fatalf("GRADLE_VERSION=%s is a release the suite installs through a mirror; pick another", version)
 	}
 	return version
 }
@@ -386,11 +395,25 @@ func Requests(log string) []Request {
 // a request whose URI had a second slash would have been answered 404.
 func CheckMirrorServed(t *testing.T, requests []Request, version string) {
 	t.Helper()
-	for _, uri := range []string{"/gradle-" + version + "-bin.zip.sha256", "/gradle-" + version + "-bin.zip"} {
-		found := slices.ContainsFunc(requests, func(r Request) bool {
-			return r.Method == "GET" && r.URI == uri && r.Status == 200
-		})
-		require.Truef(t, found, "the mirror was not asked for %s, or did not answer 200: %v", uri, requests)
+	checkMirrorAnswers(t, requests, version, 200)
+}
+
+// CheckMirrorKeptNoSum asserts the same for a stand-in that keeps no checksums:
+// the GET for the release's checksum was answered 404 and the one for its
+// archive 200, so the archive came from the mirror and the digest vfox verified
+// it against did not.
+func CheckMirrorKeptNoSum(t *testing.T, requests []Request, version string) {
+	t.Helper()
+	checkMirrorAnswers(t, requests, version, 404)
+}
+
+func checkMirrorAnswers(t *testing.T, requests []Request, version string, sumStatus int) {
+	t.Helper()
+	for _, want := range []Request{
+		{"GET", "/gradle-" + version + "-bin.zip.sha256", sumStatus},
+		{"GET", "/gradle-" + version + "-bin.zip", 200},
+	} {
+		require.Truef(t, slices.Contains(requests, want), "the mirror was not asked for %s, or did not answer %d: %v", want.URI, want.Status, requests)
 	}
 }
 

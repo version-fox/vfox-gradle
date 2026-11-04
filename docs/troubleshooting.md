@@ -62,10 +62,25 @@ Huawei Cloud's mirror, see [mirror.md](mirror.md#what-a-mirror-has-to-serve), an
 
 ### `WARNING: Checksum is not provided, skip verify...`
 
-The plugin gave vfox no sum, so vfox trusts the download. It happens when the
-request for the `.sha256` answered 404, which a mirror that keeps no such files
-does, see [mirror.md](mirror.md#what-a-mirror-has-to-serve). From services.gradle.org
-every release has one, and vfox prints `Verifying checksum <digest>...` instead.
+The plugin gave vfox no sum, so vfox trusts the download. With a mirror, both of
+these happened, see [mirror.md](mirror.md#what-a-mirror-has-to-serve): the mirror
+answered 404 for the `.sha256`, as one that keeps no such files does, and
+services.gradle.org gave no sum for the release either. A network that blocks
+services.gradle.org is the usual reason for that, and `curl -IL
+https://services.gradle.org/distributions/gradle-8.7-bin.zip.sha256` shows it; a
+release that does not exist is the other. Without a mirror, only that applies. From
+services.gradle.org every release has one, and vfox prints `Verifying checksum
+<digest>...` instead.
+
+A network that drops the traffic to services.gradle.org, rather than refusing it,
+holds the install up for the request timeout of vfox before the warning: 30 seconds
+by default, measured on 2026-11-04 with a proxy that accepted the connection and never
+answered. `vfox config plugin.http.timeout 5s` shortens it, for the requests of every
+plugin; an install of 1.12 took about 20 seconds less with it.
+
+Unreleased: release 0.1.1 asks only the mirror, so every mirror with no `.sha256`
+files ends here, Tencent Cloud's among them, though services.gradle.org has the sum.
+See [install-from-source.md](install-from-source.md) to try `main`.
 
 ### `install requires specifying a version for gradle`
 
@@ -109,7 +124,9 @@ with 9.8.2 was run. Move the build to 1.0.0 or later, see
 ## Network
 
 The plugin reads the list from `gradle.org` and the sum from
-`services.gradle.org`, and vfox downloads the zip from there too. For a release
+`services.gradle.org`, and vfox downloads the zip from there too. With
+`VFOX_GRADLE_MIRRORS` set, the zip and the sum come from the mirror, and the sum from
+`services.gradle.org` where the mirror has none. For a release
 that address redirects: the sum to `downloads.gradle.org`, and the zip to
 Gradle's releases on `github.com`, which hand it out from
 `release-assets.githubusercontent.com` (2026-11-03). A network that blocks one of

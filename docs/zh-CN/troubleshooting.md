@@ -34,7 +34,11 @@ vfox 打印 `Checksum error, file: <路径>`，接着是 `checksum error` 和 `f
 
 ### `WARNING: Checksum is not provided, skip verify...`
 
-插件没有给 vfox 校验和，所以 vfox 只能信任下载的内容。`.sha256` 请求回应 404 时就是这样，没有这类文件的镜像就会这样，见 [mirror.md](mirror.md#镜像要提供什么)。services.gradle.org 上每个版本都有校验和，vfox 打印的会是 `Verifying checksum <摘要>...`。
+插件没有给 vfox 校验和，所以 vfox 只能信任下载的内容。用镜像时，下面两件事同时发生了，见 [mirror.md](mirror.md#镜像要提供什么)：镜像对 `.sha256` 回应 404（没有这类文件的镜像就是这样），并且 services.gradle.org 也给不出这个版本的校验和。后者通常是因为网络挡住了 services.gradle.org，用 `curl -IL https://services.gradle.org/distributions/gradle-8.7-bin.zip.sha256` 可以看出来；版本不存在时也是这样。不用镜像时，只看后者。services.gradle.org 上每个版本都有校验和，vfox 打印的会是 `Verifying checksum <摘要>...`。
+
+网络丢弃发往 services.gradle.org 的流量（而不是拒绝连接）时，安装要先等 vfox 的请求超时，之后才出现这条警告：默认是 30 秒，2026-11-04 用一个接受连接却从不回应的代理测得。`vfox config plugin.http.timeout 5s` 可以缩短它，对所有插件的请求都生效；用它之后，安装 1.12 大约少用了 20 秒。
+
+未发布：0.1.1 版只问镜像，所以每个没有 `.sha256` 文件的镜像都会停在这里，腾讯云的也不例外，尽管 services.gradle.org 上有校验和。想试用 `main`，见 [install-from-source.md](install-from-source.md)。
 
 ### `install requires specifying a version for gradle`
 
@@ -64,7 +68,7 @@ vfox 打印 `Checksum error, file: <路径>`，接着是 `checksum error` 和 `f
 
 ## 网络
 
-插件从 `gradle.org` 读取版本列表，从 `services.gradle.org` 读取校验和，vfox 也从那里下载 zip。对一个版本来说，这个地址会重定向：校验和重定向到 `downloads.gradle.org`，zip 重定向到 Gradle 在 `github.com` 上的发布，再由 `release-assets.githubusercontent.com` 提供（2026-11-03）。网络挡住其中任何一个主机，安装就会在需要它的那一步失败。想换一个下载地址，见 [mirror.md](mirror.md)。
+插件从 `gradle.org` 读取版本列表，从 `services.gradle.org` 读取校验和，vfox 也从那里下载 zip。设置了 `VFOX_GRADLE_MIRRORS` 时，zip 和校验和来自镜像，镜像没有校验和的话，校验和仍从 `services.gradle.org` 读取。对一个版本来说，这个地址会重定向：校验和重定向到 `downloads.gradle.org`，zip 重定向到 Gradle 在 `github.com` 上的发布，再由 `release-assets.githubusercontent.com` 提供（2026-11-03）。网络挡住其中任何一个主机，安装就会在需要它的那一步失败。想换一个下载地址，见 [mirror.md](mirror.md)。
 
 vfox 自己的代理设置对插件的请求和下载都有效：
 

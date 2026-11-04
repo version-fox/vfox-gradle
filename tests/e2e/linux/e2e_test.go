@@ -158,7 +158,7 @@ func runOne(t *testing.T, ctx context.Context, image, platform string, c common.
 
 	version := common.ResolveVersion(t)
 	machine := strings.TrimSpace(execOK(ctx, t, ctr, "uname --machine"))
-	t.Logf("=== vfox %s, gradle@%s and gradle@%s, %s (%s) ===", c.Vfox, version, common.MirrorVersion, platform, machine)
+	t.Logf("=== vfox %s, gradle@%s, gradle@%s and gradle@%s, %s (%s) ===", c.Vfox, version, common.MirrorVersion, common.NoSumVersion, platform, machine)
 
 	setupVfox(ctx, t, ctr, c.Vfox)
 	checkNotes(ctx, t, ctr)
@@ -190,4 +190,15 @@ func runOne(t *testing.T, ctx context.Context, image, platform string, c common.
 	t.Logf("PASS gradle@%s was installed through the mirror at %s", common.MirrorVersion, proxy.url())
 
 	verifySwitch(ctx, t, ctr, version, common.MirrorVersion)
+
+	// A release through a mirror that keeps zips and no .sha256 files, as Tencent
+	// Cloud's does for the releases after 8.0.1: the stand-in answers 404 to the
+	// checksum. The archive comes from the mirror and the digest from
+	// services.gradle.org, and vfox must verify the one against the other, where
+	// it used to warn and trust the download.
+	bare := startMirror(ctx, t, ctr, 8082, "-checksum-status", "404")
+	digest = installGradle(ctx, t, ctr, common.NoSumVersion, common.MirrorEnv+"="+bare.url()+"/")
+	common.CheckMirrorKeptNoSum(t, bare.requests(ctx, t, ctr), common.NoSumVersion)
+	verifyPublishedDigest(ctx, t, ctr, common.NoSumVersion, digest)
+	t.Logf("PASS gradle@%s was installed through the mirror at %s, which keeps no checksums, and verified against the one Gradle publishes", common.NoSumVersion, bare.url())
 }
