@@ -111,13 +111,16 @@ end
 -- "gradle-9.5.1"), or the gradle-launcher jar in its lib directory
 -- ("gradle-launcher-9.8.2.jar") where the name carries none ("/usr/share/gradle").
 local function version_for_home(dir)
-    local version = util:parse_version_from_dirname(basename(dir))
-    if version ~= nil then
-        return version
+    local base = basename(dir)
+    if base ~= nil then
+        local version = util:parse_version_from_dirname(base)
+        if version ~= nil then
+            return version
+        end
     end
     local lib = join_path(dir, "lib")
     for _, name in ipairs(list_names(lib)) do
-        version = util:parse_version_from_launcher(name)
+        local version = util:parse_version_from_launcher(name)
         if version ~= nil then
             return version
         end
