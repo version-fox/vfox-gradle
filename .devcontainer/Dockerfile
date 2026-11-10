@@ -38,7 +38,7 @@ COPY --from=docker:29-cli /usr/local/bin/docker /usr/local/bin/docker
 # image) and test.yml (vfox).
 ARG STYLUA_VERSION=2.5.2
 ARG LUA_LANGUAGE_SERVER_VERSION=3.19.1
-ARG VFOX_VERSION=1.0.13
+ARG VFOX_VERSION=1.1.0
 ARG ACTIONLINT_VERSION=1.7.12
 
 # Heredocs need BuildKit, which the dev container tooling uses by default. The

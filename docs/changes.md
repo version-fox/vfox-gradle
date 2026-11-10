@@ -27,12 +27,10 @@ releases.
   `distributionUrl` when that release is installed (`ParseLegacyFile`; a version
   named in `.vfox.toml` wins). See
   [versions.md](versions.md#wrapper-projects).
-- The hook tests run on vfox 1.0.13 and 1.1.0: `detect_test.lua` calls the
-  `Detect` hook through the test proxy where the core knows it (1.1.0+) and
-  loads `hooks/detect.lua` directly where it does not, so the same assertions
-  run on both. Bumping the Test Plugin workflow and the dev container from
-  1.0.13 to 1.1.0 is recommended follow-up (needs a token with the `workflow`
-  scope to push); 1.1.0 is verified locally.
+- The hook tests run on vfox 1.1.0: the Test Plugin workflow and the dev
+  container pin 1.1.0, which brings the `Detect` and `Fingerprint` hooks.
+  `detect_test.lua` and `fingerprint_test.lua` still pass on 1.0.13 by loading
+  the hook file directly.
 
 ## 0.1.2 (2026-11-04)
 

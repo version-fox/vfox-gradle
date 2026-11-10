@@ -184,7 +184,8 @@ that returns a bare string where vfox wants a table fails the test.
   hooks the same way: stubbed `io.open` and call-through-proxy-or-direct-load,
   and temporary files with wrapper properties for the legacy cases (`-bin` and
   `-all`, escaped and unescaped URLs, mirrors, release candidates, Windows line
-  endings, and files with no URL).
+  endings, and files with no URL). The Test Plugin workflow and the dev
+  container pin vfox 1.1.0, which brings the `Detect` and `Fingerprint` hooks.
 
 The tests do not see the environment of the machine: `os.getenv` answers for
 `VFOX_GRADLE_MIRRORS` from a table in `pre_install_test.lua`, which sets the mirror

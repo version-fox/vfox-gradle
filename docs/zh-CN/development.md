@@ -83,7 +83,7 @@ vfox plugin test . --file tests/pre_install_test.lua
 - `pre_install_test.lua` 用一张按地址索引的表来回答校验和请求，并按顺序断言钩子请求了哪些地址。它覆盖有镜像和没有镜像时的地址、User-Agent、摘要文件的各种写法，以及请求的每一种结果：200、404、其他状态码和网络失败。对镜像的 404，它还覆盖 services.gradle.org 随后可能给出的各种回应，以及镜像的其他失败不会走到这一步。
 - `env_keys_test.lua` 和 `util_test.lua` 覆盖 `EnvKeys` 和版本比较。
 - `detect_test.lua` 覆盖 `Detect` 的版本解析和扫描起点（`util:parse_version_from_dirname`、`util:parse_version_from_launcher`、`util:is_valid_version_name`、`util:detect_roots`），再用一台假机器实际运行 `Detect`（SDKMAN!、mise、asdf、`/opt`、目录名里没有版本的系统安装，以及一个完整和一个没下完的 wrapper 下载）。它在 `test.load()` 之后再桩掉 `io.popen` 和 `io.open`，所以加载插件本身读的还是真实文件。核心认识 `Detect` 钩子时（vfox 1.1.0+）走测试代理调用它，不认识时直接加载 `hooks/detect.lua`，所以这个文件在 1.0.13 和 1.1.0 上都能过。
-- `fingerprint_test.lua` 和 `parse_legacy_file_test.lua` 用同样的方式覆盖新增的两个钩子：桩掉 `io.open`、代理或直接加载二选一，以及用临时文件构造 wrapper properties 的各种 legacy 场景（`-bin` 和 `-all`、转义和未转义的地址、镜像、候选版、Windows 换行，以及没有地址的文件）。
+- `fingerprint_test.lua` 和 `parse_legacy_file_test.lua` 用同样的方式覆盖新增的两个钩子：桩掉 `io.open`、代理或直接加载二选一，以及用临时文件构造 wrapper properties 的各种 legacy 场景（`-bin` 和 `-all`、转义和未转义的地址、镜像、候选版、Windows 换行，以及没有地址的文件）。Test Plugin 工作流和开发容器固定的都是 vfox 1.1.0（带来了 `Detect` 和 `Fingerprint` 钩子）。
 
 测试看不到所在机器的环境：`os.getenv` 对 `VFOX_GRADLE_MIRRORS` 的回答来自 `pre_install_test.lua` 里的一张表，它为每个用例设置镜像，所以你自己 Shell 里的镜像不会影响测试。gopher-lua 1.1.1 会丢失被闭包在 `pcall` 之后赋值的 `local x = nil`：外层作用域读到的仍是 `nil`。这就是 HTTP 函数读取的状态保存在表字段里的原因。
 
