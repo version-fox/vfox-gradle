@@ -69,6 +69,4 @@ vfox use --global gradle@8.7     # 之后新开的所有 Shell
 
 ## Wrapper 项目
 
-未发布：插件 0.1.3 及更高版本。旧版插件忽略这个文件。
-
 Gradle wrapper 把版本固定在 `gradle/wrapper/gradle-wrapper.properties`（`distributionUrl`）里。在有这个文件的项目目录里，`gradle` 会跟随这个版本：装着 8.7 和 9.8.2 时，固定 8.7 的 wrapper 会选中 8.7，不需要任何 `vfox use`。`.vfox.toml` 里写的版本优先于 wrapper 文件；文件只从当前目录读取。`-all` 发行包取同样的版本号（插件装的是 `-bin`）；候选版或快照的地址会原样返回，安装它可能像手动装一个不存在的版本名一样失败。`./gradlew` 不受影响：它仍然下载并运行自己的 Gradle。

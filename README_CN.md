@@ -54,8 +54,6 @@ vfox install gradle@8.7
 
 ## 已有的安装
 
-未发布：vfox 1.1.0 及更高版本，插件 0.1.3 及更高版本。见[docs/zh-CN/changes.md](docs/zh-CN/changes.md) 和 [docs/zh-CN/install-from-source.md](docs/zh-CN/install-from-source.md)。
-
 机器上已经有、但不是 vfox 装的 Gradle，可以链接进来，不用再下载。SDKMAN!、Homebrew、mise、asdf、系统和手动安装（Windows 上包括 Chocolatey、Scoop 和 WinGet），以及 Gradle wrapper 下载好的发行包，都能被找到：
 
 ```bash

@@ -39,8 +39,8 @@ binary. `lib/util.lua` is loaded with `require("util")`.
 | `vfox install gradle@latest` | vfox calls `Available` and takes its first entry, then goes on as above |
 | `vfox use gradle@8.7` | `PreUse` returns nothing and vfox matches the name against the installed releases. `EnvKeys` provides the variables |
 | `vfox uninstall gradle@8.7` | none, the name has to be exact |
-| `vfox link --detect gradle` (Unreleased: vfox 1.1.0 and later) | `Detect` lists the Gradle installations vfox did not install, and vfox links what it finds |
-| `vfox install`, `vfox link`, then `vfox use` and `vfox doctor` (Unreleased: vfox 1.1.0 and later) | `Fingerprint` records the launcher jar after an install or link, and the later commands warn when it changed |
+| `vfox link --detect gradle` | `Detect` lists the Gradle installations vfox did not install, and vfox links what it finds |
+| `vfox install`, `vfox link`, then `vfox use` and `vfox doctor` | `Fingerprint` records the launcher jar after an install or link, and the later commands warn when it changed |
 | project versions in a wrapper project | `ParseLegacyFile` reads the wrapper's `distributionUrl`, unless `.vfox.toml` names a Gradle |
 
 A few contracts that cost time to find:
@@ -106,12 +106,10 @@ it.
   found. The version comes from the directory name ("gradle-8.7", "8.7",
   "gradle-9.5.1-bin") or, where the name carries none, from
   `lib/gradle-launcher-<version>.jar`. Duplicates collapse to the first hit, and
-  vfox skips what is already installed or linked. Unreleased: vfox 1.1.0 and
-  later, plugin 0.1.3 and later. Older vfox ignores the hook file.
+  vfox skips what is already installed or linked.
 - `PLUGIN.shadowHints` in `metadata.lua` tells vfox what to say when another
   `gradle` shadows the selected one. Detecting the shadowing is done by vfox for
-  every plugin; there is no `PATH` scan in `PreUse`. Unreleased: vfox 1.1.0 and
-  later, plugin 0.1.3 and later. Older vfox ignores the field. See
+  every plugin; there is no `PATH` scan in `PreUse`. See
   [troubleshooting.md](troubleshooting.md#another-gradle-shadows-the-one-vfox-selected).
 - `hooks/fingerprint.lua` records the launcher jar named in
   `lib/gradle-launcher.properties` (`jarFile=gradle-launcher-9.8.2.jar`) right
@@ -120,7 +118,6 @@ it.
   way out. The distribution never changes itself, so this only fires on a
   swapped or damaged install; a linked SDK that changed is an info notice, since
   vfox does not own it. One small file read, no processes, no network.
-  Unreleased: vfox 1.1.0 and later, plugin 0.1.3 and later.
 - `hooks/parse_legacy_file.lua` reads the Gradle a wrapper project pins: the
   `distributionUrl` in `gradle/wrapper/gradle-wrapper.properties`, declared in
   `PLUGIN.legacyFilenames`. The wrapper pins one exact release, so it is
@@ -128,7 +125,6 @@ it.
   installed, and names what is missing when it is not. A `-all` distribution
   takes the same version. The file is read from the current directory only, and
   a version named in `.vfox.toml` wins. See [versions.md](versions.md#wrapper-projects).
-  Unreleased: plugin 0.1.3 and later.
 - The Foojay toolchain plugin downloads JDKs, not Gradle, and takes no part in
   this plugin either. See [java-toolchains.md](java-toolchains.md).
 - Managers that do not distribute Gradle need nothing here: nvm, for example,

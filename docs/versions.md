@@ -97,8 +97,6 @@ does nothing.
 
 ## Wrapper projects
 
-Unreleased: plugin 0.1.3 and later. Older plugin ignores the file.
-
 A Gradle wrapper pins its release in `gradle/wrapper/gradle-wrapper.properties`
 (`distributionUrl`). In a project directory with that file, `gradle` follows the
 pinned release: with 8.7 and 9.8.2 installed, a wrapper naming 8.7 selects 8.7,

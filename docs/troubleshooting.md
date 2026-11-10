@@ -90,9 +90,6 @@ while 8.14 is installed. See [versions.md](versions.md#what-vfox-use-selects).
 
 ### Another Gradle shadows the one vfox selected
 
-Unreleased: vfox 1.1.0 and later, plugin 0.1.3 and later. Older vfox prints
-nothing here, older plugin gives no hint.
-
 After `vfox use`, vfox warns when the `gradle` that runs is not the one it
 selected, because another executable sits earlier in `PATH`, and `vfox doctor`
 reports the same as `path.shadowed`. The hint names the usual culprit: a version
