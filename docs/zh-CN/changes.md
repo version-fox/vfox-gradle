@@ -4,7 +4,7 @@
 
 每个版本改了什么，从用户的角度来写。GitHub 的[发布页](https://github.com/version-fox/vfox-gradle/releases)列出了各个版本。
 
-## 未发布
+## 0.1.3（2026-11-10）
 
 - `vfox link --detect gradle` 会找到 vfox 没有装过的 Gradle 安装，确认后链接进来：SDKMAN!、Homebrew、mise 和 asdf 的候选目录、系统和手动安装（Windows 上包括 Chocolatey、Scoop 和 WinGet），以及 Gradle wrapper 下载好的发行包（只收录下载完整的）。需要 vfox 1.1.0 或更高版本（带来了 `Detect` 钩子），旧版 vfox 会忽略这个钩子文件。见 README 和 [development.md](development.md)。
 - 另一个 `gradle` 盖住 vfox 选中的版本时，vfox 1.1.0 及更高版本会连同插件的提示一起打印：SDKMAN!、Homebrew、mise、asdf、Chocolatey、Scoop、WinGet 或手动安装，以及怎样把 vfox 放到前面。旧版 vfox 在这里不打印任何内容。见 [troubleshooting.md](troubleshooting.md#另一个-gradle-盖住了-vfox-选中的版本)。

@@ -88,10 +88,6 @@ layout a mirror has to have, the mirrors that were checked, and PowerShell.
 
 ## Existing installations
 
-Unreleased: vfox 1.1.0 and later, plugin 0.1.3 and later. See
-[docs/changes.md](docs/changes.md) and
-[docs/install-from-source.md](docs/install-from-source.md).
-
 A Gradle that is already on the machine, and that vfox did not install, can be
 linked instead of downloaded. SDKMAN!, Homebrew, mise, asdf, system and manual
 installs (Chocolatey, Scoop and WinGet on Windows), and the distributions a

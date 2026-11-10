@@ -6,7 +6,7 @@ What changed in each release, as a user notices it. GitHub's
 [release pages](https://github.com/version-fox/vfox-gradle/releases) list the
 releases.
 
-## Unreleased
+## 0.1.3 (2026-11-10)
 
 - `vfox link --detect gradle` finds the Gradle installations vfox did not
   install and links what you confirm: SDKMAN!, Homebrew, mise and asdf

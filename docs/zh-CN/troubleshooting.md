@@ -50,8 +50,6 @@ vfox 打印 `Checksum error, file: <路径>`，接着是 `checksum error` 和 `f
 
 ### 另一个 Gradle 盖住了 vfox 选中的版本
 
-未发布：vfox 1.1.0 及更高版本，插件 0.1.3 及更高版本。旧版 vfox 在这里不打印任何内容，旧版插件也不给出提示。
-
 `vfox use` 之后，如果实际运行的 `gradle` 不是选中的版本（因为 `PATH` 更靠前的另一个可执行文件抢先），vfox 会发出警告，`vfox doctor` 也会以 `path.shadowed` 报告同样的问题。提示会指出常见的来源：版本管理器（SDKMAN! 用 `sdk uninstall gradle`、Homebrew 用 `brew uninstall gradle`、mise 用 `mise uninstall gradle`、asdf 用 `asdf uninstall gradle`——后两个是藏在 `shims/` 目录里的 shim）、Windows 包管理器（Chocolatey 用 `choco uninstall gradle`、Scoop 用 `scoop uninstall gradle`、WinGet 用 `winget uninstall Gradle.Gradle`），或者 `/opt`、`/usr/local`、`C:\Gradle` 里的手动安装。把它们从 `PATH` 里拿掉，或者用 `vfox config path.mode baseline` 把 vfox 放到前面。必须留在 vfox 前面的目录，可以列入 `path.preserve`。见 vfox 的 [path.mode](https://vfox.dev/zh-hans/guides/configuration.html#path-mode)。
 
 ## Gradle 的提示
