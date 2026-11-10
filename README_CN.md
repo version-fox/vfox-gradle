@@ -52,6 +52,18 @@ vfox install gradle@8.7
 
 注意名字末尾的 S。镜像要提供什么样的目录结构、检查过哪些镜像，以及 PowerShell 的写法，见 [docs/zh-CN/mirror.md](docs/zh-CN/mirror.md)。
 
+## 已有的安装
+
+未发布：vfox 1.1.0 及更高版本，插件 0.1.3 及更高版本。见[docs/zh-CN/changes.md](docs/zh-CN/changes.md) 和 [docs/zh-CN/install-from-source.md](docs/zh-CN/install-from-source.md)。
+
+机器上已经有、但不是 vfox 装的 Gradle，可以链接进来，不用再下载。SDKMAN!、Homebrew、mise、asdf、系统和手动安装（Windows 上包括 Chocolatey、Scoop 和 WinGet），以及 Gradle wrapper 下载好的发行包，都能被找到：
+
+```bash
+vfox link --detect gradle
+```
+
+vfox 会列出找到的，确认后才链接。链接进来的版本和装的版本用法一样，只是 `vfox uninstall` 只删链接，文件留在原地。搜了哪些地方、为什么 wrapper 没有版本文件，见[docs/zh-CN/development.md](docs/zh-CN/development.md#vfox-110detectshadowhints-和没做的事)。
+
 ## 平台
 
 Gradle 的二进制发行包是同一个 zip，各个系统通用（`bin/gradle` 和 `bin/gradle.bat`），插件本身没有针对任何系统的代码。[E2E 测试](docs/zh-CN/e2e.md)运行在 Linux 上，包括 amd64 和 arm64；Windows 和 macOS 没有在 CI 里测试。

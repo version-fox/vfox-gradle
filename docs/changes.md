@@ -6,6 +6,27 @@ What changed in each release, as a user notices it. GitHub's
 [release pages](https://github.com/version-fox/vfox-gradle/releases) list the
 releases.
 
+## Unreleased
+
+- `vfox link --detect gradle` finds the Gradle installations vfox did not
+  install and links what you confirm: SDKMAN!, Homebrew, mise and asdf
+  candidates, system and manual installs (including Chocolatey, Scoop and WinGet
+  on Windows), and the distributions a Gradle wrapper downloaded (finished ones
+  only). Needs vfox 1.1.0 or later, which brings the `Detect` hook; older vfox
+  ignores the hook file. See the README and
+  [development.md](development.md#vfox-110-detect-shadowhints-and-what-was-left-out).
+- When another `gradle` shadows the one vfox selected, vfox 1.1.0 and later
+  prints the plugin's hint with it: SDKMAN!, Homebrew, mise, asdf, Chocolatey,
+  Scoop, WinGet, or a manual install, and how to get vfox first. Older vfox
+  prints nothing here. See
+  [troubleshooting.md](troubleshooting.md#another-gradle-shadows-the-one-vfox-selected).
+- The hook tests run on vfox 1.0.13 and 1.1.0: `detect_test.lua` calls the
+  `Detect` hook through the test proxy where the core knows it (1.1.0+) and
+  loads `hooks/detect.lua` directly where it does not, so the same assertions
+  run on both. Bumping the Test Plugin workflow and the dev container from
+  1.0.13 to 1.1.0 is recommended follow-up (needs a token with the `workflow`
+  scope to push); 1.1.0 is verified locally.
+
 ## 0.1.2 (2026-11-04)
 
 - `VFOX_GRADLE_MIRRORS` works with a value that ends in a slash, as the README

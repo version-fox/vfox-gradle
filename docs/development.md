@@ -11,7 +11,8 @@ hooks/pre_install.lua           vfox install: the URL of the zip (or of a mirror
 hooks/env_keys.lua              GRADLE_HOME and PATH
 hooks/pre_use.lua               does nothing, vfox matches what was typed against the installed releases
 hooks/post_install.lua          does nothing
-lib/util.lua                    the two URLs, the comparison of versions and the headers of a download
+hooks/detect.lua                vfox link --detect: Gradle installations vfox did not install
+lib/util.lua                    the two URLs, the comparison of versions, the headers of a download, and the Detect helpers
 tests/*_test.lua                offline hook tests, run by vfox plugin test
 tests/fixtures/releases.html    a saved excerpt of gradle.org/releases, read by the test of Available
 tests/e2e/                      container tests, see e2e.md
@@ -36,6 +37,7 @@ binary. `lib/util.lua` is loaded with `require("util")`.
 | `vfox install gradle@latest` | vfox calls `Available` and takes its first entry, then goes on as above |
 | `vfox use gradle@8.7` | `PreUse` returns nothing and vfox matches the name against the installed releases. `EnvKeys` provides the variables |
 | `vfox uninstall gradle@8.7` | none, the name has to be exact |
+| `vfox link --detect gradle` (Unreleased: vfox 1.1.0 and later) | `Detect` lists the Gradle installations vfox did not install, and vfox links what it finds |
 
 A few contracts that cost time to find:
 
@@ -87,6 +89,41 @@ the hook asks `util.DownloadInfoUrl` for it once more, so a mirror may serve the
 alone. `Available` never uses the mirror. [mirror.md](mirror.md) is the user's side of
 it.
 
+## vfox 1.1.0: Detect, shadowHints, and what was left out
+
+Unreleased: vfox 1.1.0 and later, plugin 0.1.3 and later. Older vfox ignores both:
+it never loads a hook file it does not know and skips metadata fields it does not
+know, so `PLUGIN.minRuntimeVersion` stays at 0.3.0.
+
+- `hooks/detect.lua` reports the Gradle installations vfox did not install, for
+  `vfox link --detect gradle`: SDKMAN!, Homebrew, mise and asdf candidates
+  (`installs/gradle`, one level deeper where the version directory is not the
+  home itself), system and manual installs (`/usr/share/gradle`, `/opt`,
+  `C:\Gradle`, Scoop, Chocolatey, WinGet packages), and the distributions a
+  Gradle wrapper downloaded (`wrapper/dists`, only finished ones with `.zip.ok`).
+  Each entry is the directory `EnvKeys` expects (`GRADLE_HOME`), named as
+  `vfox search` names it ("8.7", "9.8.2"), with a note saying where it was
+  found. The version comes from the directory name ("gradle-8.7", "8.7",
+  "gradle-9.5.1-bin") or, where the name carries none, from
+  `lib/gradle-launcher-<version>.jar`. Duplicates collapse to the first hit, and
+  vfox skips what is already installed or linked.
+- `PLUGIN.shadowHints` in `metadata.lua` tells vfox what to say when another
+  `gradle` shadows the selected one. Detecting the shadowing is done by vfox for
+  every plugin; there is no `PATH` scan in `PreUse`. See
+  [troubleshooting.md](troubleshooting.md#another-gradle-shadows-the-one-vfox-selected).
+- There is no `Fingerprint` hook: a Gradle distribution never changes itself after
+  it is installed (unlike `flutter upgrade` or `npm install -g npm`), so there is
+  nothing to record and compare.
+- There is no `ParseLegacyFile` hook for `gradle/wrapper/gradle-wrapper.properties`:
+  the wrapper downloads the Gradle it names by itself and does not use the release
+  vfox selected, and the plugin stays out of it. Reading the wrapper's version into
+  `gradle` would tie the two together. See the README and
+  [java-toolchains.md](java-toolchains.md).
+- The Foojay toolchain plugin downloads JDKs, not Gradle, and takes no part in this
+  plugin either. See [java-toolchains.md](java-toolchains.md).
+- Managers that do not distribute Gradle need nothing here: nvm, for example,
+  manages Node.js only.
+
 ## Tests
 
 The hook tests run offline under `vfox plugin test`, which vfox 1.0.13 and later
@@ -121,6 +158,15 @@ that returns a bare string where vfox wants a table fails the test.
   failures do not reach it.
 - `env_keys_test.lua` and `util_test.lua` cover `EnvKeys` and the comparison of
   versions.
+- `detect_test.lua` covers the version parsing and the roots of `Detect`
+  (`util:parse_version_from_dirname`, `util:parse_version_from_launcher`,
+  `util:is_valid_version_name`, `util:detect_roots`), then runs `Detect` itself
+  against a faked machine (SDKMAN!, `/opt`, a version-less system install, and a
+  finished plus an unfinished wrapper download). It stubs `io.popen` and `io.open`
+  after `test.load()`, so the plugin loading itself still reads the real files.
+  Where the core knows the `Detect` hook (vfox 1.1.0+) it calls it through the
+  test proxy, otherwise it loads `hooks/detect.lua` directly, so the file passes
+  on 1.0.13 and 1.1.0.
 
 The tests do not see the environment of the machine: `os.getenv` answers for
 `VFOX_GRADLE_MIRRORS` from a table in `pre_install_test.lua`, which sets the mirror

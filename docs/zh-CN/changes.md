@@ -4,6 +4,12 @@
 
 每个版本改了什么，从用户的角度来写。GitHub 的[发布页](https://github.com/version-fox/vfox-gradle/releases)列出了各个版本。
 
+## 未发布
+
+- `vfox link --detect gradle` 会找到 vfox 没有装过的 Gradle 安装，确认后链接进来：SDKMAN!、Homebrew、mise 和 asdf 的候选目录、系统和手动安装（Windows 上包括 Chocolatey、Scoop 和 WinGet），以及 Gradle wrapper 下载好的发行包（只收录下载完整的）。需要 vfox 1.1.0 或更高版本（带来了 `Detect` 钩子），旧版 vfox 会忽略这个钩子文件。见 README 和 [development.md](development.md#vfox-110detectshadowhints-和没做的事)。
+- 另一个 `gradle` 盖住 vfox 选中的版本时，vfox 1.1.0 及更高版本会连同插件的提示一起打印：SDKMAN!、Homebrew、mise、asdf、Chocolatey、Scoop、WinGet 或手动安装，以及怎样把 vfox 放到前面。旧版 vfox 在这里不打印任何内容。见 [troubleshooting.md](troubleshooting.md#另一个-gradle-盖住了-vfox-选中的版本)。
+- 钩子测试在 vfox 1.0.13 和 1.1.0 上都能过：`detect_test.lua` 在核心认识 `Detect` 钩子时（1.1.0+）走测试代理调用它，不认识时直接加载 `hooks/detect.lua`，同一套断言在两边都跑。建议后续把 Test Plugin 工作流和开发容器从 1.0.13 升到 1.1.0（push 工作流文件需要带 `workflow` 权限的 token）；1.1.0 已在本地验证过。
+
 ## 0.1.2（2026-11-04）
 
 - `VFOX_GRADLE_MIRRORS` 的值可以以斜杠结尾，README 以前就是这样写的。0.1.1 版请求的是 `<镜像>//gradle-8.7-bin.zip`，nginx 上的镜像会把它当成同一个文件，不这样做的镜像则回应 404。见 [mirror.md](mirror.md)。

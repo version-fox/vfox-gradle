@@ -88,6 +88,24 @@ while 8.14 is installed. See [versions.md](versions.md#what-vfox-use-selects).
 `vfox use` needs vfox to be hooked into your shell. See vfox's
 [quick start](https://vfox.dev/guides/quick-start.html).
 
+### Another Gradle shadows the one vfox selected
+
+Unreleased: vfox 1.1.0 and later, plugin 0.1.3 and later. Older vfox prints
+nothing here, older plugin gives no hint.
+
+After `vfox use`, vfox warns when the `gradle` that runs is not the one it
+selected, because another executable sits earlier in `PATH`, and `vfox doctor`
+reports the same as `path.shadowed`. The hint names the usual culprit: a version
+manager (SDKMAN! with `sdk uninstall gradle`, Homebrew with
+`brew uninstall gradle`, mise with `mise uninstall gradle`, asdf with
+`asdf uninstall gradle` — the last two hide behind shims in a `shims/`
+directory), a Windows package manager (Chocolatey with `choco uninstall gradle`,
+Scoop with `scoop uninstall gradle`, WinGet with `winget uninstall Gradle.Gradle`),
+or a manual install in `/opt`, `/usr/local` or `C:\Gradle`. Remove it from `PATH`,
+or put vfox first with `vfox config path.mode baseline`. A directory that has to
+stay in front of vfox's can be listed in `path.preserve`. See vfox's
+[path.mode](https://vfox.dev/guides/configuration.html#path-mode).
+
 ## Messages from Gradle
 
 ### `ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.`

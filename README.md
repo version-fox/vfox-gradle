@@ -82,6 +82,27 @@ vfox install gradle@8.7
 Mind the S at the end of the name. See [docs/mirror.md](docs/mirror.md) for the
 layout a mirror has to have, the mirrors that were checked, and PowerShell.
 
+## Existing installations
+
+Unreleased: vfox 1.1.0 and later, plugin 0.1.3 and later. See
+[docs/changes.md](docs/changes.md) and
+[docs/install-from-source.md](docs/install-from-source.md).
+
+A Gradle that is already on the machine, and that vfox did not install, can be
+linked instead of downloaded. SDKMAN!, Homebrew, mise, asdf, system and manual
+installs (Chocolatey, Scoop and WinGet on Windows), and the distributions a
+Gradle wrapper downloaded, are found by:
+
+```bash
+vfox link --detect gradle
+```
+
+vfox lists what it found and asks before linking. A linked release behaves like
+an installed one, except `vfox uninstall` only removes the link, and the files
+stay where they are. See
+[docs/development.md](docs/development.md#vfox-110-detect-shadowhints-and-what-was-left-out)
+for what is searched and why there is no version file for the wrapper.
+
 ## Platforms
 
 Gradle's binary distribution is one zip for every system (`bin/gradle` and
