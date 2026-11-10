@@ -56,8 +56,11 @@ runs on from the one the build uses, explains why Gradle does not see the other 
 that vfox installed, and shows how to make it use them.
 
 A project that has the Gradle wrapper (`./gradlew`) downloads the Gradle it names
-by itself, and does not use the release vfox selected. The plugin is for the
-`gradle` command.
+by itself. In the project root, `gradle` follows the wrapper's
+`distributionUrl` when that release is installed, so it builds with the same
+Gradle; a version named in `.vfox.toml` wins. See
+[docs/versions.md](docs/versions.md#wrapper-projects). `./gradlew` itself always
+runs its own download.
 
 ## Versions and names
 
@@ -67,7 +70,8 @@ number up to 8.x (`8.7`, not `8.7.0`) and with it from 9.0.0 on, so copy the nam
 from the list. `latest` is the newest release. A bare major (`gradle@8`) is not a
 release and does not install. The name of an install is the version, and
 `vfox uninstall gradle@8.7` needs it whole. See [docs/versions.md](docs/versions.md)
-for details, including release candidates and what `vfox use gradle@8` selects.
+for details, including release candidates, what `vfox use gradle@8` selects, and
+wrapper projects.
 
 ## Mirror
 
@@ -100,8 +104,8 @@ vfox link --detect gradle
 vfox lists what it found and asks before linking. A linked release behaves like
 an installed one, except `vfox uninstall` only removes the link, and the files
 stay where they are. See
-[docs/development.md](docs/development.md#vfox-110-detect-shadowhints-and-what-was-left-out)
-for what is searched and why there is no version file for the wrapper.
+[docs/development.md](docs/development.md#vfox-110-hooks-and-the-wrapper-file)
+for what is searched.
 
 ## Platforms
 

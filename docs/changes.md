@@ -14,12 +14,19 @@ releases.
   on Windows), and the distributions a Gradle wrapper downloaded (finished ones
   only). Needs vfox 1.1.0 or later, which brings the `Detect` hook; older vfox
   ignores the hook file. See the README and
-  [development.md](development.md#vfox-110-detect-shadowhints-and-what-was-left-out).
+  [development.md](development.md#vfox-110-hooks-and-the-wrapper-file).
 - When another `gradle` shadows the one vfox selected, vfox 1.1.0 and later
   prints the plugin's hint with it: SDKMAN!, Homebrew, mise, asdf, Chocolatey,
   Scoop, WinGet, or a manual install, and how to get vfox first. Older vfox
   prints nothing here. See
   [troubleshooting.md](troubleshooting.md#another-gradle-shadows-the-one-vfox-selected).
+- `vfox use` and `vfox doctor` warn when an install changed in place: the
+  `Fingerprint` hook records the launcher jar after each install or link.
+  Needs vfox 1.1.0 or later; older vfox ignores the hook file.
+- In a wrapper project directory, `gradle` follows the wrapper's
+  `distributionUrl` when that release is installed (`ParseLegacyFile`; a version
+  named in `.vfox.toml` wins). See
+  [versions.md](versions.md#wrapper-projects).
 - The hook tests run on vfox 1.0.13 and 1.1.0: `detect_test.lua` calls the
   `Detect` hook through the test proxy where the core knows it (1.1.0+) and
   loads `hooks/detect.lua` directly where it does not, so the same assertions

@@ -94,3 +94,17 @@ installed releases. With 8.7, 8.14, 8.14.3 and 9.0.0 installed (checked with vfo
 8.14 and not 8.14.3, and `gradle@8.1` finds nothing: it is not the start of a
 number of any of them. That is vfox's own matching. The plugin's `PreUse` hook
 does nothing.
+
+## Wrapper projects
+
+Unreleased: plugin 0.1.3 and later. Older plugin ignores the file.
+
+A Gradle wrapper pins its release in `gradle/wrapper/gradle-wrapper.properties`
+(`distributionUrl`). In a project directory with that file, `gradle` follows the
+pinned release: with 8.7 and 9.8.2 installed, a wrapper naming 8.7 selects 8.7,
+without any `vfox use`. A version named in `.vfox.toml` wins over the wrapper
+file, and the file is read from the current directory only. The `-all`
+distribution takes the same version (the plugin installs `-bin`); a release
+candidate or snapshot URL is returned as is, and installing it may fail like a
+manual install of a name that is not a release. `./gradlew` is unaffected: it
+still downloads and runs its own Gradle.

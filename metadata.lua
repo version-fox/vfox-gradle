@@ -49,6 +49,12 @@ NOTE:
 
  --]]
 PLUGIN.manifestUrl = "https://github.com/version-fox/vfox-gradle/releases/download/manifest/manifest.json"
+--- Gradle projects pin their release in gradle/wrapper/gradle-wrapper.properties;
+--- vfox reads its distributionUrl when resolving project versions. A version
+--- named in .vfox.toml wins over the wrapper file.
+PLUGIN.legacyFilenames = {
+    "gradle/wrapper/gradle-wrapper.properties",
+}
 --- Hints for `vfox doctor` and `vfox use` (vfox 1.1.0 and later) when another
 --- Gradle shadows the one vfox selected. Older vfox versions ignore this field.
 --- Each entry matches part of the shadowing executable's path (case-insensitive).

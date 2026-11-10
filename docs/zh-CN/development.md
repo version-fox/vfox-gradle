@@ -12,6 +12,8 @@ hooks/env_keys.lua              GRADLE_HOME 和 PATH
 hooks/pre_use.lua               什么也不做，由 vfox 把输入的内容和已安装的版本匹配
 hooks/post_install.lua          什么也不做
 hooks/detect.lua                vfox link --detect：vfox 没有装过的 Gradle 安装
+hooks/fingerprint.lua           安装包里的 launcher jar，供 drift 检查
+hooks/parse_legacy_file.lua     wrapper 项目的 distributionUrl
 lib/util.lua                    两个地址、版本比较、下载用的请求头和 Detect 的辅助函数
 tests/*_test.lua                离线的钩子测试，由 vfox plugin test 运行
 tests/fixtures/releases.html    gradle.org/releases 的一份节选，Available 的测试会读取它
@@ -35,6 +37,8 @@ vfox 加载 `metadata.lua`，命令需要时调用相应的钩子，并向钩子
 | `vfox use gradle@8.7` | `PreUse` 什么也不返回，由 vfox 把名字和已安装的版本匹配。`EnvKeys` 提供变量 |
 | `vfox uninstall gradle@8.7` | 无，名字必须写全 |
 | `vfox link --detect gradle`（未发布：vfox 1.1.0 及更高版本） | `Detect` 列出 vfox 没有装过的 Gradle 安装，vfox 把找到的链接进来 |
+| `vfox install`／`vfox link`，以及之后的 `vfox use`、`vfox doctor`（未发布：vfox 1.1.0 及更高版本） | `Fingerprint` 在安装或链接后记下 launcher jar，之后的命令在它变化时警告 |
+| wrapper 项目里的项目版本 | 没有在 `.vfox.toml` 里写 Gradle 时，`ParseLegacyFile` 读取 wrapper 的 `distributionUrl` |
 
 几个花了不少时间才弄清楚的约定：
 
@@ -51,16 +55,16 @@ vfox 加载 `metadata.lua`，命令需要时调用相应的钩子，并向钩子
 
 `VFOX_GRADLE_MIRRORS` 在 `PreInstall` 里用 `os.getenv` 读取，值末尾的斜杠会被去掉。没有设置时，地址是 `util.DownloadInfoUrl`。校验和从同一个地址加 `.sha256` 读取，镜像回应 404 时，钩子会再向 `util.DownloadInfoUrl` 要一次，所以镜像可以只提供 zip。`Available` 从不使用镜像。[mirror.md](mirror.md) 是从用户角度写的说明。
 
-## vfox 1.1.0：Detect、shadowHints 和没做的事
+## vfox 1.1.0 的钩子，以及 wrapper 文件
 
-未发布：vfox 1.1.0 及更高版本，插件 0.1.3 及更高版本。旧版 vfox 会忽略这两处：它从不加载自己不认识的钩子文件，也跳过元数据里不认识的字段，所以 `PLUGIN.minRuntimeVersion` 保持 0.3.0。
-
-- `hooks/detect.lua` 报告 vfox 没有装过的 Gradle 安装，给 `vfox link --detect gradle` 用：SDKMAN!、Homebrew、mise 和 asdf 的候选目录（`installs/gradle`，版本目录本身不是安装目录时再往下找一层）、系统和手动安装（`/usr/share/gradle`、`/opt`、`C:\Gradle`、Scoop、Chocolatey、WinGet 的包目录），以及 Gradle wrapper 下载好的发行包（`wrapper/dists`，只收录带 `.zip.ok` 的完整下载）。每一项都是 `EnvKeys` 要的目录（`GRADLE_HOME`），名字和 `vfox search` 的一致（“8.7”“9.8.2”），并用 note 写明是在哪里找到的。版本号从目录名（“gradle-8.7”“8.7”“gradle-9.5.1-bin”）来，目录名里没有就从 `lib/gradle-launcher-<版本>.jar` 来。重复的版本只保留第一个，vfox 会跳过已经装过或链接过的。
-- `metadata.lua` 里的 `PLUGIN.shadowHints` 告诉 vfox：另一个 `gradle` 盖住选中的版本时该说什么。发现被盖住是 vfox 对每个插件都做的事，`PreUse` 里不需要去扫 `PATH`。见[troubleshooting.md](troubleshooting.md#另一个-gradle-盖住了-vfox-选中的版本)。
-- 没有 `Fingerprint` 钩子：Gradle 的发行包安装后不会自己改变（不像 `flutter upgrade` 或 `npm install -g npm`），没有什么可记录和比对的。
-- 没有给 `gradle/wrapper/gradle-wrapper.properties` 的 `ParseLegacyFile` 钩子：wrapper 会自己下载它指定的 Gradle，根本不用 vfox 选中的版本，插件也不掺和。把 wrapper 的版本读进 `gradle`，会把两者绑在一起。见 README 和 [java-toolchains.md](java-toolchains.md)。
+- `hooks/detect.lua` 报告 vfox 没有装过的 Gradle 安装，给 `vfox link --detect gradle` 用：SDKMAN!、Homebrew、mise 和 asdf 的候选目录（`installs/gradle`，版本目录本身不是安装目录时再往下找一层）、系统和手动安装（`/usr/share/gradle`、`/opt`、`C:\Gradle`、Scoop、Chocolatey、WinGet 的包目录），以及 Gradle wrapper 下载好的发行包（`wrapper/dists`，只收录带 `.zip.ok` 的完整下载）。每一项都是 `EnvKeys` 要的目录（`GRADLE_HOME`），名字和 `vfox search` 的一致（“8.7”“9.8.2”），并用 note 写明是在哪里找到的。版本号从目录名（“gradle-8.7”“8.7”“gradle-9.5.1-bin”）来，目录名里没有就从 `lib/gradle-launcher-<版本>.jar` 来。重复的版本只保留第一个，vfox 会跳过已经装过或链接过的。未发布：vfox 1.1.0 及更高版本，插件 0.1.3 及更高版本。旧版 vfox 会忽略这个钩子文件。
+- `metadata.lua` 里的 `PLUGIN.shadowHints` 告诉 vfox：另一个 `gradle` 盖住选中的版本时该说什么。发现被盖住是 vfox 对每个插件都做的事，`PreUse` 里不需要去扫 `PATH`。未发布：vfox 1.1.0 及更高版本，插件 0.1.3 及更高版本。旧版 vfox 会忽略这个字段。见[troubleshooting.md](troubleshooting.md#另一个-gradle-盖住了-vfox-选中的版本)。
+- `hooks/fingerprint.lua` 在安装或链接后记下 `lib/gradle-launcher.properties` 里的 launcher jar（`jarFile=gradle-launcher-9.8.2.jar`）。`vfox use` 和 `vfox doctor` 会再读一次，安装包在原地被换掉或损坏时警告，用 `vfox install --reinstall` 恢复。发行包自己不会改变，所以这只会在安装目录被换掉或损坏时触发；链接进来的 SDK 变了只是提示（info），因为 vfox 并不拥有它。只读一个小文件，不起进程，不走网络。未发布：vfox 1.1.0 及更高版本，插件 0.1.3 及更高版本。
+- `hooks/parse_legacy_file.lua` 读取 wrapper 项目固定下来的 Gradle：`gradle/wrapper/gradle-wrapper.properties` 里的 `distributionUrl`，在 `PLUGIN.legacyFilenames` 里声明。wrapper 固定的是某一个确切版本，所以不管解析策略是什么，都原样返回：装过就选中它，没装过就报出缺的是哪个。`-all` 发行包取同样的版本号。文件只从当前目录读取，`.vfox.toml` 里写的版本优先。见 [versions.md](versions.md#wrapper-项目)。未发布：插件 0.1.3 及更高版本。
 - Foojay toolchain 插件下载的是 JDK，不是 Gradle，和本插件也没有关系。见 [java-toolchains.md](java-toolchains.md)。
 - 不发行 Gradle 的管理器不需要任何适配：比如 nvm 只管 Node.js。
+
+`PLUGIN.minRuntimeVersion` 保持 0.3.0：旧版 vfox 从不加载自己不认识的钩子文件，也跳过元数据里不认识的字段。
 
 ## 测试
 
@@ -78,7 +82,8 @@ vfox plugin test . --file tests/pre_install_test.lua
 - `available_test.lua` 读取 `tests/fixtures/releases.html`，检查得到的列表：每个版本都在，尽管页面按日期排列，结果仍从新到旧；只向 gradle.org 发一次请求；状态码不是 200 或者请求失败时，报同一条错误。
 - `pre_install_test.lua` 用一张按地址索引的表来回答校验和请求，并按顺序断言钩子请求了哪些地址。它覆盖有镜像和没有镜像时的地址、User-Agent、摘要文件的各种写法，以及请求的每一种结果：200、404、其他状态码和网络失败。对镜像的 404，它还覆盖 services.gradle.org 随后可能给出的各种回应，以及镜像的其他失败不会走到这一步。
 - `env_keys_test.lua` 和 `util_test.lua` 覆盖 `EnvKeys` 和版本比较。
-- `detect_test.lua` 覆盖 `Detect` 的版本解析和扫描起点（`util:parse_version_from_dirname`、`util:parse_version_from_launcher`、`util:is_valid_version_name`、`util:detect_roots`），再用一台假机器实际运行 `Detect`（SDKMAN!、`/opt`、目录名里没有版本的系统安装，以及一个完整和一个没下完的 wrapper 下载）。它在 `test.load()` 之后再桩掉 `io.popen` 和 `io.open`，所以加载插件本身读的还是真实文件。核心认识 `Detect` 钩子时（vfox 1.1.0+）走测试代理调用它，不认识时直接加载 `hooks/detect.lua`，所以这个文件在 1.0.13 和 1.1.0 上都能过。
+- `detect_test.lua` 覆盖 `Detect` 的版本解析和扫描起点（`util:parse_version_from_dirname`、`util:parse_version_from_launcher`、`util:is_valid_version_name`、`util:detect_roots`），再用一台假机器实际运行 `Detect`（SDKMAN!、mise、asdf、`/opt`、目录名里没有版本的系统安装，以及一个完整和一个没下完的 wrapper 下载）。它在 `test.load()` 之后再桩掉 `io.popen` 和 `io.open`，所以加载插件本身读的还是真实文件。核心认识 `Detect` 钩子时（vfox 1.1.0+）走测试代理调用它，不认识时直接加载 `hooks/detect.lua`，所以这个文件在 1.0.13 和 1.1.0 上都能过。
+- `fingerprint_test.lua` 和 `parse_legacy_file_test.lua` 用同样的方式覆盖新增的两个钩子：桩掉 `io.open`、代理或直接加载二选一，以及用临时文件构造 wrapper properties 的各种 legacy 场景（`-bin` 和 `-all`、转义和未转义的地址、镜像、候选版、Windows 换行，以及没有地址的文件）。
 
 测试看不到所在机器的环境：`os.getenv` 对 `VFOX_GRADLE_MIRRORS` 的回答来自 `pre_install_test.lua` 里的一张表，它为每个用例设置镜像，所以你自己 Shell 里的镜像不会影响测试。gopher-lua 1.1.1 会丢失被闭包在 `pcall` 之后赋值的 `local x = nil`：外层作用域读到的仍是 `nil`。这就是 HTTP 函数读取的状态保存在表字段里的原因。
 

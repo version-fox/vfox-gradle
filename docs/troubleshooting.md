@@ -163,7 +163,11 @@ supported.
   the list.
 - **A project builds with another Gradle than the one you selected.** A project
   with a Gradle wrapper (`./gradlew`) downloads the Gradle it names, and the
-  `gradle` command is not involved.
+  `gradle` command is not involved in that download. In the project root (where
+  `gradle/wrapper/gradle-wrapper.properties` is), though, `gradle` follows the
+  wrapper's `distributionUrl` when that release is installed: no `vfox use`
+  needed. A version named in `.vfox.toml` wins. See
+  [versions.md](versions.md#wrapper-projects).
 - **`gradle --version` shows another Gradle than the one you selected.** `vfox use`
   without `--global` or `--project` applies to the current shell only, and a
   `gradle` in an earlier directory of the `PATH` wins. `vfox current gradle` shows

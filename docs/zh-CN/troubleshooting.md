@@ -85,7 +85,7 @@ vfox config proxy.url http://127.0.0.1:7890
 
 - **`vfox search` 里没有你预期的版本。** vfox 会缓存搜索结果 12 小时。`vfox config cache.availableHookDuration 0` 可以关闭缓存。也可能是 gradle.org 还没有列出这个版本。候选版本永远不会被列出，见 [versions.md](versions.md#候选版本)。
 - **`gradle@latest` 不是 gradle.org 上宣布的最新的东西。** `latest` 是 `vfox search gradle` 列出的第一个版本，而候选版本不在列表里。
-- **项目用的 Gradle 不是你选中的那个。** 带有 Gradle Wrapper（`./gradlew`）的项目会下载它指定的 Gradle，`gradle` 命令根本没有参与。
+- **项目用的 Gradle 不是你选中的那个。** 带有 Gradle Wrapper（`./gradlew`）的项目会下载它指定的 Gradle，`gradle` 命令不参与那次下载。但在项目根目录（有 `gradle/wrapper/gradle-wrapper.properties` 的地方），如果装过 wrapper 固定的版本，`gradle` 会跟随它的 `distributionUrl`，不需要 `vfox use`。`.vfox.toml` 里写的版本优先。见 [versions.md](versions.md#wrapper-项目)。
 - **`gradle --version` 显示的不是你选中的 Gradle。** 不带 `--global` 或 `--project` 的 `vfox use` 只对当前 Shell 有效，而且 `PATH` 里更靠前的目录里的 `gradle` 会胜出。`vfox current gradle` 会显示 vfox 选中的是什么，什么也没选时显示 `no current version of gradle`。
 - **构建下载了一个 vfox 已经装了的 JDK。** Gradle 在固定的几个位置找已安装的 JDK，vfox 的目录不在其中，见 [java-toolchains.md](java-toolchains.md#gradle-不会去-vfox-的目录里找)。
 
