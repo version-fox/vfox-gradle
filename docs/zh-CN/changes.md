@@ -4,6 +4,14 @@
 
 每个版本改了什么，从用户的角度来写。GitHub 的[发布页](https://github.com/version-fox/vfox-gradle/releases)列出了各个版本。
 
+## 未发布
+
+- `vfox link --detect gradle` 会找到 vfox 没有装过的 Gradle 安装，确认后链接进来：SDKMAN!、Homebrew、mise 和 asdf 的候选目录、系统和手动安装（Windows 上包括 Chocolatey、Scoop 和 WinGet），以及 Gradle wrapper 下载好的发行包（只收录下载完整的）。需要 vfox 1.1.0 或更高版本（带来了 `Detect` 钩子），旧版 vfox 会忽略这个钩子文件。见 README 和 [development.md](development.md)。
+- 另一个 `gradle` 盖住 vfox 选中的版本时，vfox 1.1.0 及更高版本会连同插件的提示一起打印：SDKMAN!、Homebrew、mise、asdf、Chocolatey、Scoop、WinGet 或手动安装，以及怎样把 vfox 放到前面。旧版 vfox 在这里不打印任何内容。见 [troubleshooting.md](troubleshooting.md#另一个-gradle-盖住了-vfox-选中的版本)。
+- 安装包在原地被换掉或损坏时，`vfox use` 和 `vfox doctor` 会警告：`Fingerprint` 钩子在每次安装或链接后记下 launcher jar。需要 vfox 1.1.0 或更高版本，旧版 vfox 会忽略这个钩子文件。
+- 在 wrapper 项目目录里，装过 wrapper 固定版本的情况下 `gradle` 会跟随它的 `distributionUrl`（`ParseLegacyFile`；`.vfox.toml` 里写的版本优先）。见 [versions.md](versions.md#wrapper-项目)。
+- 钩子测试跑在 vfox 1.1.0 上：Test Plugin 工作流和开发容器固定的都是 1.1.0（带来了 `Detect` 和 `Fingerprint` 钩子）。`detect_test.lua` 和 `fingerprint_test.lua` 在 1.0.13 上经直接加载钩子也能过。
+
 ## 0.1.2（2026-11-04）
 
 - `VFOX_GRADLE_MIRRORS` 的值可以以斜杠结尾，README 以前就是这样写的。0.1.1 版请求的是 `<镜像>//gradle-8.7-bin.zip`，nginx 上的镜像会把它当成同一个文件，不这样做的镜像则回应 404。见 [mirror.md](mirror.md)。

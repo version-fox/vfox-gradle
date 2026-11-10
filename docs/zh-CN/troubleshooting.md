@@ -48,6 +48,12 @@ vfox 打印 `Checksum error, file: <路径>`，接着是 `checksum error` 和 `f
 
 `vfox use` 需要 vfox 已经挂载到你的 Shell。见 vfox 的[快速入门](https://vfox.dev/zh-hans/guides/quick-start.html)。
 
+### 另一个 Gradle 盖住了 vfox 选中的版本
+
+未发布：vfox 1.1.0 及更高版本，插件 0.1.3 及更高版本。旧版 vfox 在这里不打印任何内容，旧版插件也不给出提示。
+
+`vfox use` 之后，如果实际运行的 `gradle` 不是选中的版本（因为 `PATH` 更靠前的另一个可执行文件抢先），vfox 会发出警告，`vfox doctor` 也会以 `path.shadowed` 报告同样的问题。提示会指出常见的来源：版本管理器（SDKMAN! 用 `sdk uninstall gradle`、Homebrew 用 `brew uninstall gradle`、mise 用 `mise uninstall gradle`、asdf 用 `asdf uninstall gradle`——后两个是藏在 `shims/` 目录里的 shim）、Windows 包管理器（Chocolatey 用 `choco uninstall gradle`、Scoop 用 `scoop uninstall gradle`、WinGet 用 `winget uninstall Gradle.Gradle`），或者 `/opt`、`/usr/local`、`C:\Gradle` 里的手动安装。把它们从 `PATH` 里拿掉，或者用 `vfox config path.mode baseline` 把 vfox 放到前面。必须留在 vfox 前面的目录，可以列入 `path.preserve`。见 vfox 的 [path.mode](https://vfox.dev/zh-hans/guides/configuration.html#path-mode)。
+
 ## Gradle 的提示
 
 ### `ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.`
@@ -79,7 +85,7 @@ vfox config proxy.url http://127.0.0.1:7890
 
 - **`vfox search` 里没有你预期的版本。** vfox 会缓存搜索结果 12 小时。`vfox config cache.availableHookDuration 0` 可以关闭缓存。也可能是 gradle.org 还没有列出这个版本。候选版本永远不会被列出，见 [versions.md](versions.md#候选版本)。
 - **`gradle@latest` 不是 gradle.org 上宣布的最新的东西。** `latest` 是 `vfox search gradle` 列出的第一个版本，而候选版本不在列表里。
-- **项目用的 Gradle 不是你选中的那个。** 带有 Gradle Wrapper（`./gradlew`）的项目会下载它指定的 Gradle，`gradle` 命令根本没有参与。
+- **项目用的 Gradle 不是你选中的那个。** 带有 Gradle Wrapper（`./gradlew`）的项目会下载它指定的 Gradle，`gradle` 命令不参与那次下载。但在项目根目录（有 `gradle/wrapper/gradle-wrapper.properties` 的地方），如果装过 wrapper 固定的版本，`gradle` 会跟随它的 `distributionUrl`，不需要 `vfox use`。`.vfox.toml` 里写的版本优先。见 [versions.md](versions.md#wrapper-项目)。
 - **`gradle --version` 显示的不是你选中的 Gradle。** 不带 `--global` 或 `--project` 的 `vfox use` 只对当前 Shell 有效，而且 `PATH` 里更靠前的目录里的 `gradle` 会胜出。`vfox current gradle` 会显示 vfox 选中的是什么，什么也没选时显示 `no current version of gradle`。
 - **构建下载了一个 vfox 已经装了的 JDK。** Gradle 在固定的几个位置找已安装的 JDK，vfox 的目录不在其中，见 [java-toolchains.md](java-toolchains.md#gradle-不会去-vfox-的目录里找)。
 
